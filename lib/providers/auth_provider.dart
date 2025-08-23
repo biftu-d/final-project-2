@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/user_model.dart';
 import '../services/api_service.dart';
 
 class AuthProvider with ChangeNotifier {
-  final FlutterSecureStorage _storage = FlutterSecureStorage();
-
+  final _storage = const FlutterSecureStorage();
+  final _apiService = ApiService();
   User? _user;
   bool _isAuthenticated = false;
   bool _isLoading = false;
@@ -47,7 +47,7 @@ class AuthProvider with ChangeNotifier {
     try {
       _token = await _storage.read(key: 'auth_token');
       if (_token != null && !JwtDecoder.isExpired(_token!)) {
-        final userData = await ApiService.getCurrentUser(_token!);
+        final userData = await _apiService.getCurrentUser(_token!);
         _user = User.fromJson(userData);
       } else {
         await logout();
@@ -81,7 +81,7 @@ class AuthProvider with ChangeNotifier {
     } catch (e) {
       _isLoading = false;
       notifyListeners();
-      throw e;
+      rethrow;
     }
   }
 
@@ -106,7 +106,7 @@ class AuthProvider with ChangeNotifier {
     } catch (e) {
       _isLoading = false;
       notifyListeners();
-      throw e;
+      rethrow;
     }
   }
 
@@ -134,7 +134,7 @@ class AuthProvider with ChangeNotifier {
 
       notifyListeners();
     } catch (e) {
-      throw e;
+      rethrow;
     }
   }
 }

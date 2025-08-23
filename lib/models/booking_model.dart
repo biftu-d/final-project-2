@@ -11,6 +11,7 @@ class Booking {
   final BookingStatus status;
   final String location;
   final String price;
+  final double? amount;
   final String? notes;
   final String? providerPhone;
   final String? customerPhone;
@@ -34,6 +35,7 @@ class Booking {
     required this.status,
     required this.location,
     required this.price,
+    this.amount,
     this.notes,
     this.providerPhone,
     this.customerPhone,
@@ -62,6 +64,7 @@ class Booking {
       ),
       location: json['location'],
       price: json['price'],
+      amount: (json['amount'] as num?)?.toDouble(),
       notes: json['notes'],
       providerPhone: json['providerPhone'],
       customerPhone: json['customerPhone'],

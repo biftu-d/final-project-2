@@ -7,20 +7,20 @@ class ApiService {
   static const String baseUrl = 'http://10.0.2.2:6061/api';
 
   static Map<String, String> _getHeaders({String? token}) {
-    final headers = {'Content-Type': 'application/json'};
+    final headers = {
+      'Content-Type': 'application/json',
+    };
+
     if (token != null) {
       headers['Authorization'] = 'Bearer $token';
     }
+
     return headers;
   }
 
-  // ===================== Authentication =====================
-
+  // Authentication
   static Future<Map<String, dynamic>> login(
-    String email,
-    String password,
-    UserRole role,
-  ) async {
+      String email, String password, UserRole role) async {
     final response = await http.post(
       Uri.parse('$baseUrl/auth/login'),
       headers: _getHeaders(),
@@ -39,9 +39,7 @@ class ApiService {
   }
 
   static Future<Map<String, dynamic>> register(
-    Map<String, dynamic> userData,
-    UserRole role,
-  ) async {
+      Map<String, dynamic> userData, UserRole role) async {
     userData['role'] = role.toString().split('.').last;
 
     final response = await http.post(
@@ -54,6 +52,22 @@ class ApiService {
       return jsonDecode(response.body);
     } else {
       throw Exception('Registration failed: ${response.body}');
+    }
+  }
+
+  Future<Map<String, dynamic>> getCurrentUser(String token) async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/auth/me'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Failed to get user data: ${response.body}');
     }
   }
 
@@ -70,25 +84,9 @@ class ApiService {
     }
   }
 
-  static Future<Map<String, dynamic>> getCurrentUser(String token) async {
-    final response = await http.get(
-      Uri.parse('$baseUrl/auth/me'),
-      headers: _getHeaders(token: token),
-    );
-
-    if (response.statusCode == 200) {
-      return jsonDecode(response.body);
-    } else {
-      throw Exception('Failed to get user data: ${response.body}');
-    }
-  }
-
-  // ===================== User Profile =====================
-
+  // User Profile
   static Future<Map<String, dynamic>> updateProfile(
-    String token,
-    Map<String, dynamic> userData,
-  ) async {
+      String token, Map<String, dynamic> userData) async {
     final response = await http.put(
       Uri.parse('$baseUrl/users/profile'),
       headers: _getHeaders(token: token),
@@ -102,8 +100,7 @@ class ApiService {
     }
   }
 
-  // ===================== Services =====================
-
+  // Services
   static Future<List<dynamic>> getFeaturedServices() async {
     final response = await http.get(
       Uri.parse('$baseUrl/services/featured'),
@@ -121,11 +118,17 @@ class ApiService {
     String? query,
     String? category,
     String? location,
+    double? latitude,
+    double? longitude,
+    double? radius, // in kilometers
   }) async {
     final queryParams = <String, String>{};
     if (query != null) queryParams['q'] = query;
     if (category != null) queryParams['category'] = category;
     if (location != null) queryParams['location'] = location;
+    if (latitude != null) queryParams['lat'] = latitude.toString();
+    if (longitude != null) queryParams['lng'] = longitude.toString();
+    if (radius != null) queryParams['radius'] = radius.toString();
 
     final uri = Uri.parse('$baseUrl/services/search')
         .replace(queryParameters: queryParams);
@@ -138,10 +141,33 @@ class ApiService {
     }
   }
 
+  static Future<List<dynamic>> getNearbyServices(
+    double latitude,
+    double longitude, {
+    double radius = 10.0, // Default 10km radius
+    String? category,
+  }) async {
+    final queryParams = <String, String>{
+      'lat': latitude.toString(),
+      'lng': longitude.toString(),
+      'radius': radius.toString(),
+    };
+
+    if (category != null) queryParams['category'] = category;
+
+    final uri = Uri.parse('$baseUrl/services/nearby')
+        .replace(queryParameters: queryParams);
+    final response = await http.get(uri, headers: _getHeaders());
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body)['services'];
+    } else {
+      throw Exception('Failed to load nearby services');
+    }
+  }
+
   static Future<Map<String, dynamic>> createService(
-    String token,
-    Map<String, dynamic> serviceData,
-  ) async {
+      String token, Map<String, dynamic> serviceData) async {
     final response = await http.post(
       Uri.parse('$baseUrl/services'),
       headers: _getHeaders(token: token),
@@ -155,13 +181,13 @@ class ApiService {
     }
   }
 
-  // ===================== Bookings =====================
-
+  // Bookings
   static Future<List<dynamic>> getUserBookings(String token) async {
     final response = await http.get(
       Uri.parse('$baseUrl/bookings/user'),
       headers: _getHeaders(token: token),
     );
+
     if (response.statusCode == 200) {
       return jsonDecode(response.body)['bookings'];
     } else {
@@ -183,9 +209,7 @@ class ApiService {
   }
 
   static Future<Map<String, dynamic>> createBooking(
-    String token,
-    Map<String, dynamic> bookingData,
-  ) async {
+      String token, Map<String, dynamic> bookingData) async {
     final response = await http.post(
       Uri.parse('$baseUrl/bookings'),
       headers: _getHeaders(token: token),
@@ -200,14 +224,13 @@ class ApiService {
   }
 
   static Future<Map<String, dynamic>> updateBookingStatus(
-    String token,
-    String bookingId,
-    BookingStatus status,
-  ) async {
+      String token, String bookingId, BookingStatus status) async {
     final response = await http.put(
       Uri.parse('$baseUrl/bookings/$bookingId/status'),
       headers: _getHeaders(token: token),
-      body: jsonEncode({'status': status.toString().split('.').last}),
+      body: jsonEncode({
+        'status': status.toString().split('.').last,
+      }),
     );
 
     if (response.statusCode == 200) {

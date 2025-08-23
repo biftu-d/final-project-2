@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "924896393190",
+    "project_id": "promatch-43333",
+    "storage_bucket": "promatch-43333.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:924896393190:android:aef1670050d90c30468827",
+        "android_client_info": {
+          "package_name": "com.example.demo_prj"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCryWjOb0egOaV0r0VWaFo6x6XlEAUFfNc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

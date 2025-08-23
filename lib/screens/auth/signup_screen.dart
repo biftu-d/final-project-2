@@ -107,13 +107,13 @@ class _SignupScreenState extends State<SignupScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SizedBox(height: 20),
-                Text(
+                const Text(
                   'Create Account',
                   style: AppTheme.headingLarge,
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Join EthioConnect to find trusted local services',
+                  'Join ProMatch to find trusted local services',
                   style: AppTheme.bodyLarge.copyWith(color: AppTheme.textGray),
                 ),
                 const SizedBox(height: 40),

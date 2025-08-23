@@ -35,7 +35,7 @@ class StatCard extends StatelessWidget {
                 ),
                 child: Icon(icon, color: color, size: 20),
               ),
-              Icon(
+              const Icon(
                 Icons.trending_up_rounded,
                 color: AppTheme.successGreen,
                 size: 16,

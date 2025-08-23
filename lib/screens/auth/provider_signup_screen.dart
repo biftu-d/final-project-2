@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
@@ -6,6 +7,7 @@ import '../../utils/app_theme.dart';
 import '../../widgets/custom_button.dart';
 import '../../widgets/custom_text_field.dart';
 import '../../widgets/step_indicator.dart';
+import '../../services/file_upload_service.dart';
 import '../main_navigation.dart';
 
 class ProviderSignupScreen extends StatefulWidget {
@@ -40,12 +42,16 @@ class _ProviderSignupScreenState extends State<ProviderSignupScreen> {
   final _confirmPasswordController = TextEditingController();
   final _priceRangeController = TextEditingController();
 
+  // File variables
+  File? _profilePicture;
+  File? _nationalId;
+  File? _businessLicense;
+
   String _selectedCategory = '';
   String _selectedAvailability = '';
   bool _isPasswordVisible = false;
   bool _isConfirmPasswordVisible = false;
-  bool _hasBusinessLicense = false;
-  bool _agreeToTerms = false;
+  final bool _hasBusinessLicense = false;
 
   final List<String> _serviceCategories = [
     'Plumbing',
@@ -116,15 +122,38 @@ class _ProviderSignupScreenState extends State<ProviderSignupScreen> {
 
   Future<void> _submitRegistration() async {
     if (!_formKeys[_currentStep].currentState!.validate()) return;
-    if (!_agreeToTerms) {
+
+    // Validate required files
+    if (_profilePicture == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Please agree to the terms and conditions'),
+          content: Text('Profile picture is required'),
           backgroundColor: AppTheme.errorRed,
         ),
       );
       return;
     }
+
+    if (_nationalId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('National ID is required'),
+          backgroundColor: AppTheme.errorRed,
+        ),
+      );
+      return;
+    }
+
+    if (_businessLicense == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Business license is required'),
+          backgroundColor: AppTheme.errorRed,
+        ),
+      );
+      return;
+    }
+
     try {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       final userData = {
@@ -139,12 +168,24 @@ class _ProviderSignupScreenState extends State<ProviderSignupScreen> {
         'password': _passwordController.text,
         'priceRange': _priceRangeController.text.trim(),
         'availability': _selectedAvailability,
-        'hasBusinessLicense': _hasBusinessLicense,
+        'profilePicture': _profilePicture?.path,
+        'nationalId': _nationalId?.path,
+        'businessLicense': _businessLicense?.path,
+        'verificationStatus': 'pending', // Will be approved by admin
       };
 
       final success = await authProvider.register(userData, UserRole.provider);
 
       if (success && mounted) {
+        // Show pending verification message
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Registration submitted! Awaiting admin approval.'),
+            backgroundColor: AppTheme.accentGold,
+            duration: Duration(seconds: 3),
+          ),
+        );
+
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (_) => const MainNavigation()),
         );
@@ -228,6 +269,34 @@ class _ProviderSignupScreenState extends State<ProviderSignupScreen> {
               style: AppTheme.bodyMedium,
             ),
             const SizedBox(height: 30),
+            // Profile Picture (Required)
+            const Text(
+              'Profile Picture *',
+              style: AppTheme.bodyLarge,
+            ),
+            const SizedBox(height: 10),
+            _buildImageUploadSection(
+              'Profile Picture',
+              Icons.person,
+              _profilePicture,
+              (file) => setState(() => _profilePicture = file),
+              isRequired: true,
+            ),
+            const SizedBox(height: 20),
+            // National ID (Required)
+            const Text(
+              'National ID *',
+              style: AppTheme.bodyLarge,
+            ),
+            const SizedBox(height: 10),
+            _buildImageUploadSection(
+              'National ID',
+              Icons.credit_card,
+              _nationalId,
+              (file) => setState(() => _nationalId = file),
+              isRequired: true,
+            ),
+            const SizedBox(height: 20),
             CustomTextField(
               controller: _providerNameController,
               label: 'Provider Name',
@@ -568,45 +637,54 @@ class _ProviderSignupScreenState extends State<ProviderSignupScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
-                    'Upload Documents (Optional)',
+                    'Business License *',
                     style: AppTheme.bodyLarge,
                   ),
                   const SizedBox(height: 10),
-                  _buildUploadSection('Profile Photo', Icons.person),
-                  const SizedBox(height: 10),
-                  _buildUploadSection('Business Logo', Icons.business),
+                  _buildPDFUploadSection(
+                    'Business License (PDF)',
+                    Icons.description,
+                    _businessLicense,
+                    (file) => setState(() => _businessLicense = file),
+                  ),
                 ],
               ),
             ),
             const SizedBox(height: 20),
-            CheckboxListTile(
-              title: const Text(
-                'I have a business license',
-                style: AppTheme.bodyMedium,
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: AppTheme.accentGold.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppTheme.accentGold.withOpacity(0.3)),
               ),
-              value: _hasBusinessLicense,
-              onChanged: (value) {
-                setState(() {
-                  _hasBusinessLicense = value!;
-                });
-              },
-              activeColor: AppTheme.accentGold,
-              contentPadding: EdgeInsets.zero,
-            ),
-            const SizedBox(height: 20),
-            CheckboxListTile(
-              title: const Text(
-                'I agree to the Terms and Conditions',
-                style: AppTheme.bodyMedium,
+              child: const Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.info_outline,
+                        color: AppTheme.accentGold,
+                        size: 20,
+                      ),
+                      SizedBox(width: 8),
+                      Text(
+                        'Verification Process',
+                        style: TextStyle(
+                          color: AppTheme.accentGold,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 8),
+                  Text(
+                    'Your information will be reviewed by our admin team. You will receive a verification notification once approved.',
+                    style: AppTheme.bodySmall,
+                  ),
+                ],
               ),
-              value: _agreeToTerms,
-              onChanged: (value) {
-                setState(() {
-                  _agreeToTerms = value!;
-                });
-              },
-              activeColor: AppTheme.accentGold,
-              contentPadding: EdgeInsets.zero,
             ),
           ],
         ),
@@ -614,30 +692,123 @@ class _ProviderSignupScreenState extends State<ProviderSignupScreen> {
     );
   }
 
-  Widget _buildUploadSection(String title, IconData icon) {
+  Widget _buildImageUploadSection(
+    String title,
+    IconData icon,
+    File? currentFile,
+    Function(File?) onFileSelected, {
+    bool isRequired = false,
+  }) {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        border: Border.all(color: AppTheme.borderGray),
+        border: Border.all(
+          color:
+              currentFile != null ? AppTheme.successGreen : AppTheme.borderGray,
+        ),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
         children: [
-          Icon(icon, color: AppTheme.textGray),
+          Icon(
+            icon,
+            color:
+                currentFile != null ? AppTheme.successGreen : AppTheme.textGray,
+          ),
           const SizedBox(width: 12),
           Expanded(
-            child: Text(
-              title,
-              style: AppTheme.bodyMedium,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title + (isRequired ? ' *' : ''),
+                  style: AppTheme.bodyMedium,
+                ),
+                if (currentFile != null)
+                  Text(
+                    FileUploadService.getFileName(currentFile.path),
+                    style: AppTheme.bodySmall.copyWith(
+                      color: AppTheme.successGreen,
+                    ),
+                  ),
+              ],
             ),
           ),
           TextButton(
-            onPressed: () {
-              // Handle file upload
+            onPressed: () async {
+              final file = await FileUploadService.pickImage(context);
+              if (file != null) {
+                onFileSelected(file);
+              }
             },
-            child: const Text(
-              'Upload',
-              style: TextStyle(color: AppTheme.accentGold),
+            child: Text(
+              currentFile != null ? 'Change' : 'Upload',
+              style: const TextStyle(color: AppTheme.accentGold),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPDFUploadSection(
+    String title,
+    IconData icon,
+    File? currentFile,
+    Function(File?) onFileSelected,
+  ) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        border: Border.all(
+          color:
+              currentFile != null ? AppTheme.successGreen : AppTheme.borderGray,
+        ),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            icon,
+            color:
+                currentFile != null ? AppTheme.successGreen : AppTheme.textGray,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: AppTheme.bodyMedium,
+                ),
+                if (currentFile != null) ...[
+                  Text(
+                    FileUploadService.getFileName(currentFile.path),
+                    style: AppTheme.bodySmall.copyWith(
+                      color: AppTheme.successGreen,
+                    ),
+                  ),
+                  Text(
+                    FileUploadService.getFileSize(currentFile),
+                    style: AppTheme.bodySmall.copyWith(
+                      color: AppTheme.textGray,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          TextButton(
+            onPressed: () async {
+              final file = await FileUploadService.pickPDF(context);
+              if (file != null) {
+                onFileSelected(file);
+              }
+            },
+            child: Text(
+              currentFile != null ? 'Change' : 'Upload',
+              style: const TextStyle(color: AppTheme.accentGold),
             ),
           ),
         ],
@@ -665,7 +836,7 @@ class _ProviderSignupScreenState extends State<ProviderSignupScreen> {
               builder: (context, authProvider, child) {
                 return CustomButton(
                   text: _currentStep == _totalSteps - 1
-                      ? 'Create Account'
+                      ? 'Submit for Approval'
                       : 'Next',
                   onPressed: authProvider.isLoading ? null : _nextStep,
                   isLoading: authProvider.isLoading,

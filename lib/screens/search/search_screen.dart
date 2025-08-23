@@ -7,8 +7,15 @@ import '../../widgets/service_card.dart';
 
 class SearchScreen extends StatefulWidget {
   final String? initialCategory;
+  final String? initialQuery;
+  final String? initialLocation;
 
-  const SearchScreen({super.key, this.initialCategory});
+  const SearchScreen({
+    super.key,
+    this.initialCategory,
+    this.initialQuery,
+    this.initialLocation,
+  });
 
   @override
   State<SearchScreen> createState() => _SearchScreenState();
@@ -39,7 +46,19 @@ class _SearchScreenState extends State<SearchScreen> {
   void initState() {
     super.initState();
     _selectedCategory = widget.initialCategory ?? 'All';
-    if (widget.initialCategory != null) {
+
+    if (widget.initialQuery != null) {
+      _searchController.text = widget.initialQuery!;
+    }
+
+    if (widget.initialLocation != null) {
+      _locationController.text = widget.initialLocation!;
+    }
+
+    // Only call search once if any initial value exists
+    if (widget.initialCategory != null ||
+        widget.initialQuery != null ||
+        widget.initialLocation != null) {
       _performSearch();
     }
   }
@@ -51,17 +70,37 @@ class _SearchScreenState extends State<SearchScreen> {
     super.dispose();
   }
 
-  void _performSearch() {
-    final serviceProvider = Provider.of<ServiceProvider>(
-      context,
-      listen: false,
-    );
-    serviceProvider.searchServices(
-      _searchController.text,
-      category: _selectedCategory == 'All' ? null : _selectedCategory,
-      location:
-          _locationController.text.isEmpty ? null : _locationController.text,
-    );
+  Future<void> _performSearch() async {
+    final serviceProvider =
+        Provider.of<ServiceProvider>(context, listen: false);
+
+    try {
+      await serviceProvider.searchServices(
+        _searchController.text,
+        category: _selectedCategory == 'All' ? null : _selectedCategory,
+        location:
+            _locationController.text.isEmpty ? null : _locationController.text,
+      );
+
+      // 🔍 Debug print before filtering
+      print("🔍 Raw services returned: ${serviceProvider.services.length}");
+      for (var s in serviceProvider.services) {
+        print(
+            "➡️ ${s.name} | Approved: ${s.isApproved} | Available: ${s.isAvailable}");
+      }
+
+      // ✅ Filter services on Flutter side
+      final filtered = serviceProvider.services
+          .where((s) => s.isApproved == true && s.isAvailable == true)
+          .toList();
+
+      print("✅ After filtering: ${filtered.length} services remain");
+
+      // Update provider manually with filtered results
+      serviceProvider.setServices(filtered);
+    } catch (e) {
+      print("❌ Search Error: $e");
+    }
   }
 
   @override
@@ -77,7 +116,10 @@ class _SearchScreenState extends State<SearchScreen> {
           icon: const Icon(Icons.arrow_back_ios, color: AppTheme.primaryWhite),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: const Text('Search Services', style: AppTheme.headingSmall),
+        title: const Text(
+          'Search Services',
+          style: AppTheme.headingSmall,
+        ),
         actions: [
           IconButton(
             icon: Icon(
@@ -103,10 +145,8 @@ class _SearchScreenState extends State<SearchScreen> {
                 CustomTextField(
                   controller: _searchController,
                   label: 'Search services...',
-                  prefixIcon: const Icon(
-                    Icons.search_rounded,
-                    color: AppTheme.textGray,
-                  ),
+                  prefixIcon: const Icon(Icons.search_rounded,
+                      color: AppTheme.textGray),
                   onChanged: (value) {
                     if (value.isNotEmpty) {
                       _performSearch();
@@ -118,10 +158,8 @@ class _SearchScreenState extends State<SearchScreen> {
                 CustomTextField(
                   controller: _locationController,
                   label: 'Location (optional)',
-                  prefixIcon: const Icon(
-                    Icons.location_on_rounded,
-                    color: AppTheme.textGray,
-                  ),
+                  prefixIcon: const Icon(Icons.location_on_rounded,
+                      color: AppTheme.textGray),
                   onChanged: (value) => _performSearch(),
                 ),
                 const SizedBox(height: 16),
@@ -147,9 +185,7 @@ class _SearchScreenState extends State<SearchScreen> {
                           },
                           child: Container(
                             padding: const EdgeInsets.symmetric(
-                              horizontal: 20,
-                              vertical: 8,
-                            ),
+                                horizontal: 20, vertical: 8),
                             decoration: BoxDecoration(
                               color: isSelected
                                   ? AppTheme.accentGold
@@ -200,9 +236,16 @@ class _SearchScreenState extends State<SearchScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.search_off_rounded, size: 64, color: AppTheme.textGray),
+            const Icon(
+              Icons.search_off_rounded,
+              size: 64,
+              color: AppTheme.textGray,
+            ),
             const SizedBox(height: 16),
-            const Text('No services found', style: AppTheme.headingSmall),
+            const Text(
+              'No services found',
+              style: AppTheme.headingSmall,
+            ),
             const SizedBox(height: 8),
             Text(
               'Try adjusting your search criteria',
@@ -237,11 +280,21 @@ class _SearchScreenState extends State<SearchScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.map_rounded, size: 64, color: AppTheme.textGray),
+            Icon(
+              Icons.map_rounded,
+              size: 64,
+              color: AppTheme.textGray,
+            ),
             SizedBox(height: 16),
-            Text('Map View', style: AppTheme.headingSmall),
+            Text(
+              'Map View',
+              style: AppTheme.headingSmall,
+            ),
             SizedBox(height: 8),
-            Text('Map integration coming soon', style: AppTheme.bodyMedium),
+            Text(
+              'Map integration coming soon',
+              style: AppTheme.bodyMedium,
+            ),
           ],
         ),
       ),

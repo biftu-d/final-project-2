@@ -114,7 +114,7 @@ class _BookingsScreenState extends State<BookingsScreen>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
+            const Icon(
               Icons.calendar_today_rounded,
               size: 64,
               color: AppTheme.textGray,

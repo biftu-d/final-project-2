@@ -119,7 +119,7 @@ class ServiceCard extends StatelessWidget {
             const SizedBox(height: 12),
             Row(
               children: [
-                Icon(
+                const Icon(
                   Icons.location_on_rounded,
                   size: 16,
                   color: AppTheme.textGray,

@@ -8,6 +8,8 @@ class User {
   final UserRole role;
   final DateTime createdAt;
   final int totalBookings;
+  final double rating;
+  final String servicesStatus;
 
   User({
     required this.id,
@@ -19,6 +21,8 @@ class User {
     required this.role,
     required this.createdAt,
     this.totalBookings = 0,
+    required this.rating,
+    required this.servicesStatus,
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
@@ -35,6 +39,8 @@ class User {
       ),
       createdAt: DateTime.parse(json['createdAt']),
       totalBookings: json['totalBookings'] ?? 0,
+      rating: (json['rating'] ?? 0).toDouble(),
+      servicesStatus: json['servicesStatus'] ?? 'Inactive',
     );
   }
 

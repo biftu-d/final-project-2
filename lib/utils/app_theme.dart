@@ -4,6 +4,7 @@ class AppTheme {
   // Colors
   static const Color primaryBlack = Color(0xFF1E1E1E);
   static const Color secondaryGray = Color(0xFF2A2A2A);
+  static const Color lightGray = Color(0xFF858383);
   static const Color accentGold = Color(0xFFeba700);
   static const Color successGreen = Color(0xFF28A745);
   static const Color primaryWhite = Color(0xFFFFFFFF);
@@ -140,7 +141,6 @@ class AppTheme {
       primary: accentGold,
       secondary: successGreen,
       surface: secondaryGray,
-      background: primaryBlack,
       error: errorRed,
     ),
     appBarTheme: const AppBarTheme(
@@ -165,6 +165,79 @@ class AppTheme {
         borderSide: BorderSide.none,
       ),
       enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide.none,
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: accentGold, width: 2),
+      ),
+      contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+      hintStyle: const TextStyle(color: textGray),
+    ),
+  );
+  // Add this inside your AppTheme class (below darkTheme)
+
+  static final ThemeData lightTheme = ThemeData(
+    brightness: Brightness.light,
+    primaryColor: accentGold,
+    scaffoldBackgroundColor: primaryWhite,
+    fontFamily: 'Inter',
+    colorScheme: const ColorScheme.light(
+      primary: accentGold,
+      secondary: successGreen,
+      surface: Colors.white,
+      error: errorRed,
+    ),
+    appBarTheme: const AppBarTheme(
+      backgroundColor: primaryWhite,
+      elevation: 0,
+      titleTextStyle: TextStyle(
+        fontSize: 24,
+        fontWeight: FontWeight.bold,
+        color: primaryBlack,
+        fontFamily: 'Inter',
+      ),
+      iconTheme: IconThemeData(color: primaryBlack),
+    ),
+    bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+      backgroundColor: primaryWhite,
+      selectedItemColor: accentGold,
+      unselectedItemColor: textGray,
+      type: BottomNavigationBarType.fixed,
+    ),
+    elevatedButtonTheme: ElevatedButtonThemeData(
+      style: ElevatedButton.styleFrom(
+        backgroundColor: successGreen,
+        foregroundColor: primaryWhite,
+        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
+        shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.all(Radius.circular(12))),
+        textStyle: const TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.w600,
+          fontFamily: 'Inter',
+        ),
+      ),
+    ),
+    outlinedButtonTheme: OutlinedButtonThemeData(
+      style: OutlinedButton.styleFrom(
+        foregroundColor: primaryBlack,
+        side: const BorderSide(color: borderGray),
+        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
+        shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.all(Radius.circular(12))),
+        textStyle: const TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.w600,
+          fontFamily: 'Inter',
+        ),
+      ),
+    ),
+    inputDecorationTheme: InputDecorationTheme(
+      filled: true,
+      fillColor: secondaryGray.withOpacity(0.05),
+      border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
         borderSide: BorderSide.none,
       ),

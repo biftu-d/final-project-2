@@ -4,6 +4,7 @@ import '../../providers/auth_provider.dart';
 import '../../providers/service_provider.dart';
 import '../../utils/app_theme.dart';
 import '../../widgets/stat_card.dart';
+import '../add_service_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -18,10 +19,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      final serviceProvider = Provider.of<ServiceProvider>(
-        context,
-        listen: false,
-      );
+      final serviceProvider =
+          Provider.of<ServiceProvider>(context, listen: false);
       final token = authProvider.token;
       if (token != null) {
         serviceProvider.loadProviderBookings(token);
@@ -38,12 +37,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     // Calculate statistics
     final totalBookings = bookings.length;
-    final pendingBookings = bookings
-        .where((b) => b.status.name == 'pending')
-        .length;
-    final completedBookings = bookings
-        .where((b) => b.status.name == 'completed')
-        .length;
+    final pendingBookings =
+        bookings.where((b) => b.status.name == 'pending').length;
+    final completedBookings =
+        bookings.where((b) => b.status.name == 'completed').length;
     final totalEarnings = completedBookings * 500; // Placeholder calculation
 
     return Scaffold(
@@ -51,7 +48,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        title: const Text('Dashboard', style: AppTheme.headingSmall),
+        title: const Text(
+          'Dashboard',
+          style: AppTheme.headingSmall,
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.add_rounded, color: AppTheme.primaryWhite),
@@ -95,8 +95,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
             ),
             const SizedBox(height: 24),
+
             // Statistics Grid
-            const Text('Overview', style: AppTheme.headingSmall),
+            const Text(
+              'Overview',
+              style: AppTheme.headingSmall,
+            ),
             const SizedBox(height: 16),
             GridView.count(
               crossAxisCount: 2,
@@ -125,7 +129,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
                 StatCard(
                   title: 'Total Earnings',
-                  value: '${totalEarnings} ETB',
+                  value: '$totalEarnings ETB',
                   icon: Icons.monetization_on_rounded,
                   color: Colors.blue,
                 ),
@@ -134,7 +138,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
             const SizedBox(height: 24),
 
             // Quick Actions
-            const Text('Quick Actions', style: AppTheme.headingSmall),
+            const Text(
+              'Quick Actions',
+              style: AppTheme.headingSmall,
+            ),
             const SizedBox(height: 16),
             _buildQuickActionCard(
               'Add New Service',
@@ -149,9 +156,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               'Manage your working hours',
               Icons.schedule_rounded,
               AppTheme.successGreen,
-              () {
-                // Navigate to availability settings
-              },
+              () => _showAvailabilityDialog(),
             ),
             const SizedBox(height: 12),
             _buildQuickActionCard(
@@ -159,13 +164,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
               'See detailed performance metrics',
               Icons.analytics_rounded,
               Colors.blue,
-              () {
-                // Navigate to analytics
-              },
+              () => _showAnalyticsDialog(),
             ),
             const SizedBox(height: 24),
+
             // Recent Activity
-            const Text('Recent Activity', style: AppTheme.headingSmall),
+            const Text(
+              'Recent Activity',
+              style: AppTheme.headingSmall,
+            ),
             const SizedBox(height: 16),
             if (bookings.isEmpty)
               Container(
@@ -180,7 +187,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         color: AppTheme.textGray,
                       ),
                       SizedBox(height: 12),
-                      Text('No recent activity', style: AppTheme.bodyMedium),
+                      Text(
+                        'No recent activity',
+                        style: AppTheme.bodyMedium,
+                      ),
                     ],
                   ),
                 ),
@@ -202,9 +212,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           width: 40,
                           height: 40,
                           decoration: BoxDecoration(
-                            color: _getStatusColor(
-                              booking.status,
-                            ).withOpacity(0.2),
+                            color: _getStatusColor(booking.status)
+                                .withOpacity(0.2),
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: Icon(
@@ -272,7 +281,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 color: color.withOpacity(0.2),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: Icon(icon, color: color, size: 20),
+              child: Icon(
+                icon,
+                color: color,
+                size: 20,
+              ),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -336,21 +349,163 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   void _showAddServiceDialog() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => const AddServiceScreen(),
+      ),
+    );
+  }
+
+  void _showAvailabilityDialog() {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: AppTheme.secondaryGray,
-        title: const Text('Add New Service', style: AppTheme.headingSmall),
-        content: const Text(
-          'Service creation feature coming soon!',
-          style: AppTheme.bodyMedium,
+        title: const Text(
+          'Update Availability',
+          style: AppTheme.headingSmall,
+        ),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              CheckboxListTile(
+                title: const Text('Monday', style: AppTheme.bodyMedium),
+                value: true,
+                onChanged: (value) {},
+                activeColor: AppTheme.accentGold,
+                contentPadding: EdgeInsets.zero,
+              ),
+              CheckboxListTile(
+                title: const Text('Tuesday', style: AppTheme.bodyMedium),
+                value: true,
+                onChanged: (value) {},
+                activeColor: AppTheme.accentGold,
+                contentPadding: EdgeInsets.zero,
+              ),
+              CheckboxListTile(
+                title: const Text('Wednesday', style: AppTheme.bodyMedium),
+                value: false,
+                onChanged: (value) {},
+                activeColor: AppTheme.accentGold,
+                contentPadding: EdgeInsets.zero,
+              ),
+              CheckboxListTile(
+                title: const Text('Thursday', style: AppTheme.bodyMedium),
+                value: true,
+                onChanged: (value) {},
+                activeColor: AppTheme.accentGold,
+                contentPadding: EdgeInsets.zero,
+              ),
+              CheckboxListTile(
+                title: const Text('Friday', style: AppTheme.bodyMedium),
+                value: true,
+                onChanged: (value) {},
+                activeColor: AppTheme.accentGold,
+                contentPadding: EdgeInsets.zero,
+              ),
+              CheckboxListTile(
+                title: const Text('Saturday', style: AppTheme.bodyMedium),
+                value: false,
+                onChanged: (value) {},
+                activeColor: AppTheme.accentGold,
+                contentPadding: EdgeInsets.zero,
+              ),
+              CheckboxListTile(
+                title: const Text('Sunday', style: AppTheme.bodyMedium),
+                value: false,
+                onChanged: (value) {},
+                activeColor: AppTheme.accentGold,
+                contentPadding: EdgeInsets.zero,
+              ),
+            ],
+          ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
             child: const Text(
-              'OK',
+              'Cancel',
+              style: TextStyle(color: AppTheme.textGray),
+            ),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Availability updated!'),
+                  backgroundColor: AppTheme.successGreen,
+                ),
+              );
+            },
+            child: const Text(
+              'Update',
               style: TextStyle(color: AppTheme.accentGold),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showAnalyticsDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppTheme.secondaryGray,
+        title: const Text(
+          'Analytics Overview',
+          style: AppTheme.headingSmall,
+        ),
+        content: SizedBox(
+          width: double.maxFinite,
+          height: 300,
+          child: Column(
+            children: [
+              _buildAnalyticsItem('Total Views', '1,234', Icons.visibility),
+              _buildAnalyticsItem('Profile Clicks', '456', Icons.touch_app),
+              _buildAnalyticsItem(
+                  'Bookings This Month', '23', Icons.calendar_today),
+              _buildAnalyticsItem('Average Rating', '4.8', Icons.star),
+              _buildAnalyticsItem('Response Time', '2 hours', Icons.schedule),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text(
+              'Close',
+              style: TextStyle(color: AppTheme.accentGold),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAnalyticsItem(String title, String value, IconData icon) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppTheme.primaryBlack,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, color: AppTheme.accentGold, size: 20),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(title, style: AppTheme.bodyMedium),
+          ),
+          Text(
+            value,
+            style: AppTheme.bodyMedium.copyWith(
+              fontWeight: FontWeight.w600,
+              color: AppTheme.accentGold,
             ),
           ),
         ],

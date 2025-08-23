@@ -23,7 +23,7 @@ class RoleSelectionScreen extends StatelessWidget {
               const SizedBox(height: 40),
               const Text(
                 'Welcome to ProMatch',
-                style: AppTheme.headingLarge,
+                style: AppTheme.headingMedium,
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 16),
@@ -54,7 +54,6 @@ class RoleSelectionScreen extends StatelessWidget {
                   ],
                 ),
               ),
-              const SizedBox(height: 40),
             ],
           ),
         ),
@@ -90,7 +89,7 @@ class _RoleCard extends StatelessWidget {
       onTap: onTap,
       child: Container(
         width: double.infinity,
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(16),
         decoration: AppTheme.cardDecoration.copyWith(
           border: Border.all(color: color.withOpacity(0.3)),
         ),
@@ -111,7 +110,7 @@ class _RoleCard extends StatelessWidget {
               style: AppTheme.headingSmall,
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 4),
             Text(
               subtitle,
               style: AppTheme.bodyMedium.copyWith(color: AppTheme.textGray),
