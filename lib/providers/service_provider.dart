@@ -82,16 +82,20 @@ class ServiceProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      final data = await ApiService.searchServices(
+      // ✅ Call API and get full response as Map
+      final Map<String, dynamic> responseMap = await ApiService.searchServices(
         query: query,
         category: category,
         location: location,
       );
 
-      // ✅ Parse JSON and filter approved services only
-      _services = data
-          .map((json) => ServiceModel.fromJson(json))
-          .where((service) => service.isApproved == true)
+      final List<ServiceModel> servicesList = (responseMap['services'] as List)
+          .map((e) => ServiceModel.fromJson(e as Map<String, dynamic>))
+          .toList();
+
+      _services = servicesList
+          .where((s) =>
+              s.verificationStatus.toLowerCase() == 'approved' && s.isAvailable)
           .toList();
     } catch (e) {
       _error = e.toString();
@@ -134,16 +138,19 @@ class ServiceProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  Future<bool> createBooking(
-      String token, Map<String, dynamic> bookingData) async {
-    try {
-      await ApiService.createBooking(token, bookingData);
-      return true;
-    } catch (e) {
-      _error = e.toString();
+  Future<bool> createBooking(String token, String serviceId) async {
+    // Wrap the serviceId inside a Map
+    final response = await ApiService.createBooking(token, {
+      'serviceId': serviceId,
+    });
+
+    if (response['success'] == true) {
+      final newBooking = Booking.fromJson(response['booking']);
+      bookings.add(newBooking);
       notifyListeners();
-      return false;
+      return true;
     }
+    return false;
   }
 
   Future<bool> updateBookingStatus(

@@ -1,9 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/service_provider.dart';
+import '../../providers/auth_provider.dart';
+import '../../models/user_model.dart';
+import '../../services/api_service.dart';
 import '../../utils/app_theme.dart';
 import '../../widgets/custom_text_field.dart';
 import '../../widgets/service_card.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:geocoding/geocoding.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../../models/service_model.dart';
+import '../bookings/bookings_screen.dart'; // adjust the path
 
 class SearchScreen extends StatefulWidget {
   final String? initialCategory;
@@ -81,26 +89,22 @@ class _SearchScreenState extends State<SearchScreen> {
         location:
             _locationController.text.isEmpty ? null : _locationController.text,
       );
-
-      // 🔍 Debug print before filtering
-      print("🔍 Raw services returned: ${serviceProvider.services.length}");
-      for (var s in serviceProvider.services) {
-        print(
-            "➡️ ${s.name} | Approved: ${s.isApproved} | Available: ${s.isAvailable}");
-      }
-
-      // ✅ Filter services on Flutter side
-      final filtered = serviceProvider.services
-          .where((s) => s.isApproved == true && s.isAvailable == true)
-          .toList();
-
-      print("✅ After filtering: ${filtered.length} services remain");
-
-      // Update provider manually with filtered results
-      serviceProvider.setServices(filtered);
     } catch (e) {
       print("❌ Search Error: $e");
     }
+  }
+
+  Future<String?> getUserToken() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    return prefs.getString('auth_token');
+  }
+
+  double _getPrice(ServiceModel service) {
+    final parts = service.priceRange.split('-');
+    if (parts.isNotEmpty) {
+      return double.tryParse(parts[0].trim()) ?? 0.0;
+    }
+    return 0.0;
   }
 
   @override
@@ -263,41 +267,201 @@ class _SearchScreenState extends State<SearchScreen> {
         final service = serviceProvider.services[index];
         return Padding(
           padding: const EdgeInsets.only(bottom: 16),
-          child: ServiceCard(service: service),
+          child: ServiceCard(
+              service: service,
+              onTap: () {
+                // (optional) open service details page
+              },
+              onBookNow: () async {
+                final token = await getUserToken();
+                if (token == null) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('❌ User token not found!')),
+                  );
+                  return;
+                }
+
+                // Example: show a simple dialog to pick date/time before booking
+                final selectedDate = await showDatePicker(
+                  context: context,
+                  initialDate: DateTime.now(),
+                  firstDate: DateTime.now(),
+                  lastDate: DateTime.now().add(const Duration(days: 365)),
+                );
+
+                if (selectedDate == null) return;
+
+                final selectedTime = await showTimePicker(
+                  context: context,
+                  initialTime: TimeOfDay.now(),
+                );
+
+                if (selectedTime == null) return;
+
+                // Construct booking payload
+                final bookingData = {
+                  'serviceId': service.id,
+                  'providerId': service.providerId,
+                  'scheduledDate': selectedDate.toIso8601String(),
+                  'scheduledTime': selectedTime.format(context),
+                  'location': _locationController.text.isNotEmpty
+                      ? _locationController.text
+                      : service.location,
+                  'notes': '',
+                  'price': _getPrice(
+                      service), // you can add a field for notes if needed
+                };
+
+                try {
+                  await ApiService.createBooking(token, bookingData);
+
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('✅ Booking successful!')),
+                  );
+                  // Refresh bookings
+                  final serviceProvider =
+                      Provider.of<ServiceProvider>(context, listen: false);
+                  final authProvider =
+                      Provider.of<AuthProvider>(context, listen: false);
+
+                  if (authProvider.user?.role == UserRole.provider) {
+                    await serviceProvider
+                        .loadProviderBookings(authProvider.token!);
+                  } else {
+                    await serviceProvider.loadUserBookings(authProvider.token!);
+                  }
+
+                  // Navigate to BookingScreen
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const BookingsScreen()),
+                  );
+                  // adjust your route
+                } catch (e) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('❌ Booking failed: $e')),
+                  );
+                }
+              }),
         );
       },
     );
   }
 
   Widget _buildMapView() {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 24.0),
-      decoration: BoxDecoration(
-        color: AppTheme.secondaryGray,
-        borderRadius: BorderRadius.circular(15),
-      ),
-      child: const Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.map_rounded,
-              size: 64,
-              color: AppTheme.textGray,
-            ),
-            SizedBox(height: 16),
-            Text(
-              'Map View',
-              style: AppTheme.headingSmall,
-            ),
-            SizedBox(height: 8),
-            Text(
-              'Map integration coming soon',
-              style: AppTheme.bodyMedium,
-            ),
-          ],
+    final serviceProvider =
+        Provider.of<ServiceProvider>(context, listen: false);
+
+    // if no providers or location text is empty → show your placeholder
+    if (serviceProvider.services.isEmpty || _locationController.text.isEmpty) {
+      return Container(
+        margin: const EdgeInsets.symmetric(horizontal: 24.0),
+        height: 300,
+        decoration: BoxDecoration(
+          color: AppTheme.secondaryGray,
+          borderRadius: BorderRadius.circular(20),
         ),
-      ),
+        child: const Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.map_rounded, size: 64, color: AppTheme.textGray),
+              SizedBox(height: 16),
+              Text('Map View', style: AppTheme.headingSmall),
+              SizedBox(height: 8),
+              Text('Map integration coming soon', style: AppTheme.bodyMedium),
+            ],
+          ),
+        ),
+      );
+    }
+
+    // convert all provider addresses to coordinates
+    Future<List<Marker>> getProviderMarkers() async {
+      List<Marker> markers = [];
+
+      for (var s in serviceProvider.services) {
+        if (s.location.isNotEmpty) {
+          try {
+            final results = await locationFromAddress(s.location);
+            if (results.isNotEmpty) {
+              final loc = results.first;
+              markers.add(
+                Marker(
+                  markerId: MarkerId(s.id.toString()),
+                  position: LatLng(loc.latitude, loc.longitude),
+                  infoWindow: InfoWindow(
+                    title: s.name,
+                    snippet: s.category,
+                  ),
+                ),
+              );
+            }
+          } catch (e) {
+            print("❌ Could not geocode ${s.location}: $e");
+          }
+        }
+      }
+
+      return markers;
+    }
+
+    return FutureBuilder<List<Marker>>(
+      future: getProviderMarkers(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Container(
+            margin: const EdgeInsets.symmetric(horizontal: 24.0),
+            height: 300,
+            decoration: BoxDecoration(
+              color: AppTheme.secondaryGray,
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: const Center(child: CircularProgressIndicator()),
+          );
+        }
+
+        final markers = snapshot.data ?? [];
+        if (markers.isEmpty) {
+          return Container(
+            margin: const EdgeInsets.symmetric(horizontal: 24.0),
+            height: 300,
+            decoration: BoxDecoration(
+              color: AppTheme.secondaryGray,
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: const Center(
+              child: Text("❌ No provider locations found"),
+            ),
+          );
+        }
+
+        return Container(
+          margin: const EdgeInsets.symmetric(horizontal: 24.0),
+          height: 300,
+          decoration: BoxDecoration(
+            color: AppTheme.secondaryGray,
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.2),
+                blurRadius: 10,
+                offset: const Offset(0, 5),
+              ),
+            ],
+          ),
+          clipBehavior: Clip.hardEdge,
+          child: GoogleMap(
+            initialCameraPosition: CameraPosition(
+              target: markers.first.position, // focus on first provider
+              zoom: 13,
+            ),
+            markers: markers.toSet(),
+            myLocationEnabled: true,
+            zoomControlsEnabled: false,
+          ),
+        );
+      },
     );
   }
 }

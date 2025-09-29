@@ -5,8 +5,14 @@ import '../utils/app_theme.dart';
 class ServiceCard extends StatelessWidget {
   final ServiceModel service;
   final VoidCallback? onTap;
+  final VoidCallback? onBookNow;
 
-  const ServiceCard({super.key, required this.service, this.onTap});
+  const ServiceCard({
+    super.key,
+    required this.service,
+    this.onTap,
+    this.onBookNow,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -180,9 +186,7 @@ class ServiceCard extends StatelessWidget {
                 ),
                 const Spacer(),
                 GestureDetector(
-                  onTap: () {
-                    // Handle booking
-                  },
+                  onTap: onBookNow,
                   child: Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 16,

@@ -10,6 +10,8 @@ class User {
   final int totalBookings;
   final double rating;
   final String servicesStatus;
+  final String? verificationStatus; // 'pending', 'approved', 'rejected'
+  final bool? isAvailable;
 
   User({
     required this.id,
@@ -23,6 +25,8 @@ class User {
     this.totalBookings = 0,
     required this.rating,
     required this.servicesStatus,
+    this.verificationStatus,
+    this.isAvailable,
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
@@ -41,6 +45,8 @@ class User {
       totalBookings: json['totalBookings'] ?? 0,
       rating: (json['rating'] ?? 0).toDouble(),
       servicesStatus: json['servicesStatus'] ?? 'Inactive',
+      verificationStatus: json['verificationStatus'], // backend field
+      isAvailable: json['isAvailable'],
     );
   }
 
@@ -55,6 +61,8 @@ class User {
       'role': role.toString().split('.').last,
       'createdAt': createdAt.toIso8601String(),
       'totalBookings': totalBookings,
+      'verificationStatus': verificationStatus,
+      'isAvailable': isAvailable,
     };
   }
 }

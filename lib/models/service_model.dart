@@ -11,7 +11,7 @@ class ServiceModel {
   final int totalReviews;
   final String priceRange;
   final List<String> availability;
-  final bool isApproved;
+  final String verificationStatus;
   final String? image;
   final String? businessLicense;
   final int experience;
@@ -35,7 +35,7 @@ class ServiceModel {
     this.totalReviews = 0,
     required this.priceRange,
     required this.availability,
-    required this.isApproved,
+    required this.verificationStatus,
     this.image,
     this.businessLicense,
     required this.experience,
@@ -49,22 +49,31 @@ class ServiceModel {
 
   factory ServiceModel.fromJson(Map<String, dynamic> json) {
     return ServiceModel(
-      id: json['_id'] ?? json['id'],
-      name: json['name'] ?? '',
-      providerId: json['providerId'],
-      providerName: json['providerName'],
+      id: json['_id']?.toString() ?? '',
+      name: json['name']?.toString() ?? '',
+      providerId: json['providerId'] is String
+          ? json['providerId']
+          : json['providerId']?['_id']?.toString() ?? '',
+      providerName: json['providerId']?['name'] ?? json['providerName'] ?? '',
       serviceName: json['serviceName'],
       category: json['category'],
       description: json['description'],
       location: json['location'],
       rating: (json['rating'] ?? 0.0).toDouble(),
-      totalReviews: json['totalReviews'] ?? 0,
+      totalReviews: (json['totalReviews'] is int)
+          ? json['totalReviews']
+          : int.tryParse(json['totalReviews']?.toString() ?? '0') ?? 0,
       priceRange: json['priceRange'],
-      availability: List<String>.from(json['availability'] ?? []),
-      isApproved: json['isApproved'] ?? false,
-      image: json['image'],
+      availability: (json['availability'] != null)
+          ? List<String>.from(
+              (json['availability'] as List).map((e) => e.toString()))
+          : [],
+      verificationStatus: json['verificationStatus'] ?? 'pending',
+      image: json['image']?.toString(),
       businessLicense: json['businessLicense'],
-      experience: json['experience'] ?? 0,
+      experience: (json['experience'] is int)
+          ? json['experience']
+          : int.tryParse(json['experience']?.toString() ?? '0') ?? 0,
       isAvailable: json['isAvailable'] ?? true,
       createdAt: DateTime.parse(json['createdAt']),
       latitude: json['coordinates']?['latitude']?.toDouble(),

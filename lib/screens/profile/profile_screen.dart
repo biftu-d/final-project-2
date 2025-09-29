@@ -133,7 +133,10 @@ class ProfileScreen extends StatelessWidget {
                 ),
                 _buildInfoItem(
                   'Services',
-                  user?.servicesStatus ?? 'Not provided',
+                  (user?.verificationStatus == 'approved' &&
+                          user?.isAvailable == true)
+                      ? 'Active'
+                      : 'Inactive',
                   Icons.work_rounded,
                 ),
               ]),

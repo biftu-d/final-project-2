@@ -191,13 +191,13 @@ class _HomeScreenState extends State<HomeScreen> {
                   ],
                 ),
               ),
+              IconButton(
+                onPressed: () => _showNotifications(context),
+                icon: const Icon(Icons.notifications_rounded,
+                    color: AppTheme.accentGold),
+              ),
             ],
           ),
-        ),
-        IconButton(
-          onPressed: () => _showNotifications(context),
-          icon: const Icon(Icons.notifications_rounded,
-              color: AppTheme.accentGold),
         ),
 
         // Google Map

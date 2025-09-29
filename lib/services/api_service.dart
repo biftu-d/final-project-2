@@ -114,7 +114,7 @@ class ApiService {
     }
   }
 
-  static Future<List<dynamic>> searchServices({
+  static Future<Map<String, dynamic>> searchServices({
     String? query,
     String? category,
     String? location,
@@ -132,10 +132,20 @@ class ApiService {
 
     final uri = Uri.parse('$baseUrl/services/search')
         .replace(queryParameters: queryParams);
+    print("📤 Sending request to: $uri");
     final response = await http.get(uri, headers: _getHeaders());
 
+    print("📥 Response status: ${response.statusCode}"); // 👈 Debug: see status
+    print("📥 Raw response body: ${response.body}");
+
     if (response.statusCode == 200) {
-      return jsonDecode(response.body)['services'];
+      final decoded = jsonDecode(response.body);
+
+      if (decoded is Map<String, dynamic>) {
+        return decoded; // ✅ now correct type
+      } else {
+        throw Exception('Unexpected response format: not a Map');
+      }
     } else {
       throw Exception('Failed to search services');
     }
