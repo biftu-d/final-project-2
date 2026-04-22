@@ -20,8 +20,6 @@ class ServiceProvider with ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get error => _error;
 
-  // Add this inside your ServiceProvider class:
-
   int get totalBookings => _providerBookings.length;
 
   double get totalRevenue => _providerBookings.fold(
@@ -57,14 +55,14 @@ class ServiceProvider with ChangeNotifier {
   }
 
   Future<void> loadNearbyServices(double latitude, double longitude,
-      {double radius = 10.0}) async {
+      {double radius = 10.0, String? sortBy}) async {
     _isLoading = true;
     _error = null;
     notifyListeners();
 
     try {
       final data = await ApiService.getNearbyServices(latitude, longitude,
-          radius: radius);
+          radius: radius, sortBy: sortBy);
       _nearbyServices =
           data.map((json) => ServiceModel.fromJson(json)).toList();
     } catch (e) {
@@ -82,7 +80,6 @@ class ServiceProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      // ✅ Call API and get full response as Map
       final Map<String, dynamic> responseMap = await ApiService.searchServices(
         query: query,
         category: category,
@@ -138,19 +135,27 @@ class ServiceProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  Future<bool> createBooking(String token, String serviceId) async {
-    // Wrap the serviceId inside a Map
-    final response = await ApiService.createBooking(token, {
-      'serviceId': serviceId,
-    });
+  Future<bool> createBooking(
+      String token, Map<String, dynamic> bookingData) async {
+    try {
+      final response = await ApiService.createBooking(token, bookingData);
 
-    if (response['success'] == true) {
-      final newBooking = Booking.fromJson(response['booking']);
-      bookings.add(newBooking);
+      if (response['success'] == true) {
+        // Refresh bookings for both user and provider
+        await loadUserBookings(token);
+        await loadProviderBookings(token);
+        notifyListeners(); // Update UI
+        return true;
+      } else {
+        _error = response['message'] ?? 'Failed to create booking';
+        notifyListeners();
+        return false;
+      }
+    } catch (e) {
+      _error = e.toString();
       notifyListeners();
-      return true;
+      return false;
     }
-    return false;
   }
 
   Future<bool> updateBookingStatus(

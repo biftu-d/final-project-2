@@ -15,24 +15,28 @@ class LocationProvider with ChangeNotifier {
   String? get error => _error;
   bool get locationPermissionGranted => _locationPermissionGranted;
 
-  Future<void> requestLocationPermission() async {
+  Future<bool> requestLocationPermission() async {
     _isLoading = true;
     notifyListeners();
 
     try {
       _locationPermissionGranted =
           await LocationService.requestLocationPermission();
+
       if (_locationPermissionGranted) {
         await getCurrentLocation();
       } else {
         _error = 'Location permission denied';
       }
+
+      return _locationPermissionGranted;
     } catch (e) {
       _error = e.toString();
+      return false;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
     }
-
-    _isLoading = false;
-    notifyListeners();
   }
 
   Future<void> getCurrentLocation() async {

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:easy_localization/easy_localization.dart';
 import '../../providers/service_provider.dart';
+import '../../providers/theme_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../models/user_model.dart';
 import '../../services/api_service.dart';
@@ -11,7 +13,9 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../models/service_model.dart';
-import '../bookings/bookings_screen.dart'; // adjust the path
+import '../../widgets/theme_toggle_button.dart';
+import '../bookings/bookings_screen.dart';
+import '../../widgets/language_selector.dart';
 
 class SearchScreen extends StatefulWidget {
   final String? initialCategory;
@@ -39,15 +43,7 @@ class _SearchScreenState extends State<SearchScreen> {
     'All',
     'Plumbing',
     'Electrical',
-    'Cleaning',
-    'Beauty & Hair',
-    'Tutoring',
-    'Delivery',
-    'Photography',
-    'Repairs',
-    'Carpentry',
-    'Painting',
-    'Gardening',
+    'Mechanical Technician',
   ];
 
   @override
@@ -110,25 +106,31 @@ class _SearchScreenState extends State<SearchScreen> {
   @override
   Widget build(BuildContext context) {
     final serviceProvider = Provider.of<ServiceProvider>(context);
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final isDark = themeProvider.isDarkMode;
 
     return Scaffold(
-      backgroundColor: AppTheme.primaryBlack,
+      backgroundColor:
+          isDark ? AppTheme.primaryBlack : AppTheme.lightBackground,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: AppTheme.primaryWhite),
+          icon: Icon(
+            Icons.arrow_back_ios,
+            color: isDark ? AppTheme.primaryWhite : AppTheme.lightText,
+          ),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: const Text(
-          'Search Services',
-          style: AppTheme.headingSmall,
+        title: Text(
+          'search_serv'.tr(),
+          style: isDark ? AppTheme.headingSmall : AppTheme.headingSmallLight,
         ),
         actions: [
           IconButton(
             icon: Icon(
               _isMapView ? Icons.list_rounded : Icons.map_rounded,
-              color: AppTheme.primaryWhite,
+              color: isDark ? AppTheme.primaryWhite : AppTheme.lightText,
             ),
             onPressed: () {
               setState(() {
@@ -136,6 +138,9 @@ class _SearchScreenState extends State<SearchScreen> {
               });
             },
           ),
+          LanguageSelector(isDarkMode: isDark),
+          const ThemeToggleButton(),
+          const SizedBox(width: 8),
         ],
       ),
       body: Column(

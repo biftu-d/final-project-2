@@ -1,13 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:easy_localization/easy_localization.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/theme_provider.dart';
+import '../../providers/notification_provider.dart';
 import '../../models/user_model.dart';
 import '../../services/file_upload_service.dart';
 import '../../utils/app_theme.dart';
 import 'dart:io';
-import 'package:intl/intl.dart';
+import '../../services/api_service.dart';
 import '../../widgets/custom_button.dart';
+import '../../widgets/theme_toggle_button.dart';
+import '../../widgets/language_selector.dart';
 import '../auth/role_selection_screen.dart';
+import '../settings/privacy_security_screen.dart';
+import '../settings/help_support_screen.dart';
+import '../notifications/notifications_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -15,25 +23,80 @@ class ProfileScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final isDark = themeProvider.isDarkMode;
     final user = authProvider.user;
     final isProvider = user?.role == UserRole.provider;
+    final unread = Provider.of<NotificationProvider>(context).unreadCount;
 
     return Scaffold(
-      backgroundColor: AppTheme.primaryBlack,
+      backgroundColor:
+          isDark ? AppTheme.primaryBlack : AppTheme.lightBackground,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        title: const Text(
-          'Profile',
-          style: AppTheme.headingSmall,
+        title: Text(
+          'profile.profile'.tr(),
+          style: isDark ? AppTheme.headingSmall : AppTheme.headingSmallLight,
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.edit_rounded, color: AppTheme.primaryWhite),
+            icon: Icon(
+              Icons.edit_rounded,
+              color: isDark ? AppTheme.primaryWhite : AppTheme.lightText,
+            ),
             onPressed: () {
-              // Navigate to edit profile
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const EditProfileScreen(),
+                ),
+              );
             },
           ),
+          Stack(
+            alignment: Alignment.center,
+            children: [
+              IconButton(
+                icon: Icon(
+                  Icons.notifications_rounded,
+                  color: isDark ? AppTheme.primaryWhite : AppTheme.lightText,
+                ),
+                onPressed: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (_) => const NotificationsScreen()),
+                ),
+              ),
+              if (unread > 0)
+                Positioned(
+                  right: 8,
+                  top: 8,
+                  child: Container(
+                    padding: const EdgeInsets.all(2),
+                    constraints:
+                        const BoxConstraints(minWidth: 15, minHeight: 15),
+                    decoration: BoxDecoration(
+                      color: AppTheme.errorRed,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      unread > 99 ? '99+' : '$unread',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 8,
+                        fontWeight: FontWeight.bold,
+                        fontFamily: 'Inter',
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          LanguageSelector(isDarkMode: isDark),
+          const ThemeToggleButton(),
+          const SizedBox(width: 16),
         ],
       ),
       body: SingleChildScrollView(
@@ -43,7 +106,7 @@ class ProfileScreen extends StatelessWidget {
             // Profile Header
             Container(
               padding: const EdgeInsets.all(24),
-              decoration: AppTheme.cardDecoration,
+              decoration: AppTheme.getCardDecoration(isDark),
               child: Column(
                 children: [
                   Container(
@@ -52,25 +115,67 @@ class ProfileScreen extends StatelessWidget {
                     decoration: BoxDecoration(
                       color: AppTheme.accentGold,
                       borderRadius: BorderRadius.circular(50),
+                      border: Border.all(
+                        color: AppTheme.accentGold,
+                        width: 3,
+                      ),
                     ),
-                    child: Icon(
-                      isProvider
-                          ? Icons.business_rounded
-                          : Icons.person_rounded,
-                      size: 50,
-                      color: AppTheme.primaryBlack,
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(50),
+                      child: (user?.profilePicture != null &&
+                                  user!.profilePicture!.isNotEmpty) ||
+                              (user?.avatar != null && user!.avatar!.isNotEmpty)
+                          ? Image.network(
+                              user.profilePicture ?? user.avatar!,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) {
+                                return Icon(
+                                  isProvider
+                                      ? Icons.business_rounded
+                                      : Icons.person_rounded,
+                                  size: 50,
+                                  color: AppTheme.primaryBlack,
+                                );
+                              },
+                              loadingBuilder:
+                                  (context, child, loadingProgress) {
+                                if (loadingProgress == null) return child;
+                                return Center(
+                                  child: CircularProgressIndicator(
+                                    value: loadingProgress.expectedTotalBytes !=
+                                            null
+                                        ? loadingProgress
+                                                .cumulativeBytesLoaded /
+                                            loadingProgress.expectedTotalBytes!
+                                        : null,
+                                  ),
+                                );
+                              },
+                            )
+                          : Icon(
+                              isProvider
+                                  ? Icons.business_rounded
+                                  : Icons.person_rounded,
+                              size: 50,
+                              color: AppTheme.primaryBlack,
+                            ),
                     ),
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    user?.name ?? 'User',
-                    style: AppTheme.headingMedium,
+                    user?.name ?? 'profile.user'.tr(),
+                    style: isDark
+                        ? AppTheme.headingMedium
+                        : AppTheme.headingMediumLight,
                   ),
                   const SizedBox(height: 4),
                   Text(
                     user?.email ?? 'user@example.com',
-                    style:
-                        AppTheme.bodyMedium.copyWith(color: AppTheme.textGray),
+                    style: (isDark
+                            ? AppTheme.bodyMedium
+                            : AppTheme.bodyMediumLight)
+                        .copyWith(
+                            color: AppTheme.getSecondaryTextColor(isDark)),
                   ),
                   const SizedBox(height: 8),
                   Container(
@@ -83,7 +188,9 @@ class ProfileScreen extends StatelessWidget {
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
-                      isProvider ? 'Service Provider' : 'Customer',
+                      isProvider
+                          ? 'profile.service_provider'.tr()
+                          : 'Customer'.tr(),
                       style: AppTheme.bodySmall.copyWith(
                         color: AppTheme.primaryBlack,
                         fontWeight: FontWeight.w600,
@@ -94,62 +201,146 @@ class ProfileScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 24),
+            // Rejection Notice for Providers
+            if (isProvider && user?.verificationStatus == 'rejected') ...[
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: AppTheme.errorRed.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppTheme.errorRed, width: 2),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(Icons.error,
+                            color: AppTheme.errorRed, size: 24),
+                        const SizedBox(width: 8),
+                        Text(
+                          'profile.appln_rejected'.tr(),
+                          style: const TextStyle(
+                            color: AppTheme.errorRed,
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    if (user?.rejectionReason != null) ...[
+                      Text(
+                        'profile.reason'.tr(),
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          color: isDark
+                              ? AppTheme.primaryWhite
+                              : AppTheme.lightText,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        user!.rejectionReason!,
+                        style: TextStyle(
+                          color: isDark
+                              ? AppTheme.textGray
+                              : AppTheme.lightTextSecondary,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                    ],
+                    CustomButton(
+                      text: 'profile.resubmit_appln'.tr(),
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const EditProfileScreen(),
+                          ),
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
+            ],
 
             // Profile Information
-            _buildInfoSection('Personal Information', [
-              _buildInfoItem(
-                'Phone',
-                user?.phone ?? 'Not provided',
-                Icons.phone_rounded,
-              ),
-              _buildInfoItem(
-                'Location',
-                user?.location ?? 'Not provided',
-                Icons.location_on_rounded,
-              ),
-              _buildInfoItem(
-                'Member Since',
-                user?.createdAt != null
-                    ? DateFormat("MMMM yyyy").format(user!.createdAt)
-                    : 'Not provided',
-                Icons.calendar_today_rounded,
-              ),
-            ]),
+            _buildInfoSection(
+                'profile.personal_info'.tr(),
+                [
+                  _buildInfoItem(
+                    'profile.phone'.tr(),
+                    user?.phone ?? 'Not provided',
+                    Icons.phone_rounded,
+                    isDark,
+                  ),
+                  _buildInfoItem(
+                    'profile.location'.tr(),
+                    user?.location ?? 'Not provided',
+                    Icons.location_on_rounded,
+                    isDark,
+                  ),
+                  _buildInfoItem(
+                    'profile.member'.tr(),
+                    user?.createdAt != null
+                        ? DateFormat("MMMM yyyy").format(user!.createdAt)
+                        : 'Not provided',
+                    Icons.calendar_today_rounded,
+                    isDark,
+                  ),
+                ],
+                isDark),
             const SizedBox(height: 16),
 
             if (isProvider) ...[
-              _buildInfoSection('Business Information', [
-                _buildInfoItem(
-                  'Total Bookings',
-                  '${user?.totalBookings ?? 0}',
-                  Icons.calendar_today_rounded,
-                ),
-                _buildInfoItem(
-                  'Rating',
-                  user?.rating != null
-                      ? '${user!.rating.toStringAsFixed(1)} ⭐'
-                      : 'No rating yet',
-                  Icons.star_rounded,
-                ),
-                _buildInfoItem(
-                  'Services',
-                  (user?.verificationStatus == 'approved' &&
-                          user?.isAvailable == true)
-                      ? 'Active'
-                      : 'Inactive',
-                  Icons.work_rounded,
-                ),
-              ]),
+              _buildInfoSection(
+                  'profile.basic_info'.tr(),
+                  [
+                    _buildInfoItem(
+                      'home.total_bookings'.tr(),
+                      '${user?.totalBookings ?? 0}',
+                      Icons.calendar_today_rounded,
+                      isDark,
+                    ),
+                    _buildInfoItem(
+                      'profile.rating'.tr(),
+                      user?.rating != null
+                          ? '${user!.rating.toStringAsFixed(1)} ⭐'
+                          : 'profile.no_rating'.tr(),
+                      Icons.star_rounded,
+                      isDark,
+                    ),
+                    _buildInfoItem(
+                      'profile.service'.tr(),
+                      (user?.verificationStatus == 'approved' &&
+                              user?.isAvailable == true)
+                          ? 'Active'
+                          : 'Inactive',
+                      Icons.work_rounded,
+                      isDark,
+                    ),
+                  ],
+                  isDark),
+              const SizedBox(height: 8),
+              CustomButton(
+                text: 'profile.view_review'.tr(),
+                onPressed: () => _showReviewsDialog(context, authProvider),
+                backgroundColor:
+                    const Color.fromARGB(36, 60, 255, 0).withOpacity(0.2),
+              ),
               const SizedBox(height: 16),
             ],
 
             // Settings Section
-            _buildSettingsSection(context),
+            _buildSettingsSection(context, isDark),
             const SizedBox(height: 24),
 
             // Logout Button
             CustomButton(
-              text: 'Logout',
+              text: 'will.logout'.tr(),
               onPressed: () => _showLogoutDialog(context),
               backgroundColor: AppTheme.errorRed,
             ),
@@ -159,16 +350,17 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildInfoSection(String title, List<Widget> items) {
+  Widget _buildInfoSection(String title, List<Widget> items, bool isDark) {
     return Container(
       padding: const EdgeInsets.all(20),
-      decoration: AppTheme.cardDecoration,
+      decoration: AppTheme.getCardDecoration(isDark),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             title,
-            style: AppTheme.bodyLarge.copyWith(fontWeight: FontWeight.w600),
+            style: (isDark ? AppTheme.bodyLarge : AppTheme.bodyLargeLight)
+                .copyWith(fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 16),
           ...items,
@@ -177,7 +369,8 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildInfoItem(String label, String value, IconData icon) {
+  Widget _buildInfoItem(
+      String label, String value, IconData icon, bool isDark) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
@@ -185,7 +378,7 @@ class ProfileScreen extends StatelessWidget {
           Icon(
             icon,
             size: 20,
-            color: AppTheme.textGray,
+            color: AppTheme.getSecondaryTextColor(isDark),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -194,11 +387,16 @@ class ProfileScreen extends StatelessWidget {
               children: [
                 Text(
                   label,
-                  style: AppTheme.bodySmall.copyWith(color: AppTheme.textGray),
+                  style: (isDark ? AppTheme.bodySmall : AppTheme.bodySmallLight)
+                      .copyWith(
+                    color: AppTheme.getSecondaryTextColor(isDark),
+                  ),
                 ),
                 Text(
                   value,
-                  style: AppTheme.bodyMedium,
+                  style:
+                      (isDark ? AppTheme.bodyMedium : AppTheme.bodyMediumLight)
+                          .copyWith(color: AppTheme.getTextColor(isDark)),
                 ),
               ],
             ),
@@ -208,49 +406,71 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildSettingsSection(BuildContext context) {
+  Widget _buildSettingsSection(BuildContext context, bool isDark) {
     return Container(
       padding: const EdgeInsets.all(20),
-      decoration: AppTheme.cardDecoration,
+      decoration: AppTheme.getCardDecoration(isDark),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Settings',
-            style: AppTheme.bodyLarge.copyWith(fontWeight: FontWeight.w600),
+            'profile.setting'.tr(),
+            style: isDark
+                ? AppTheme.bodyLarge.copyWith(fontWeight: FontWeight.w600)
+                : AppTheme.bodyLargeLight.copyWith(fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 16),
           _buildSettingsItem(
-            'Edit Profile',
+            'profile.edit_profile'.tr(),
             Icons.edit_rounded,
             () => _navigateToEditProfile(context),
+            isDark,
           ),
           _buildSettingsItem(
-            'Notifications',
+            'profile.notification',
             Icons.notifications_rounded,
             () => _showNotificationSettings(context),
+            isDark,
           ),
           _buildSettingsItem(
-            'Privacy & Security',
+            'profile.privacy_security'.tr(),
             Icons.security_rounded,
-            () => _showPrivacySettings(context),
+            () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const PrivacySecurityScreen(),
+                ),
+              );
+            },
+            isDark,
           ),
           _buildSettingsItem(
-            'Help & Support',
+            'profile.help_support'.tr(),
             Icons.help_rounded,
-            () => _showHelpSupport(context),
+            () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const HelpSupportScreen(),
+                ),
+              );
+            },
+            isDark,
           ),
           _buildSettingsItem(
-            'Terms & Conditions',
+            'profile.term_condition'.tr(),
             Icons.description_rounded,
             () => _showTermsConditions(context),
+            isDark,
           ),
         ],
       ),
     );
   }
 
-  Widget _buildSettingsItem(String title, IconData icon, VoidCallback onTap) {
+  Widget _buildSettingsItem(
+      String title, IconData icon, VoidCallback onTap, bool isDark) {
     return GestureDetector(
       onTap: onTap,
       child: Padding(
@@ -260,19 +480,19 @@ class ProfileScreen extends StatelessWidget {
             Icon(
               icon,
               size: 20,
-              color: AppTheme.textGray,
+              color: AppTheme.getSecondaryTextColor(isDark),
             ),
             const SizedBox(width: 12),
             Expanded(
               child: Text(
                 title,
-                style: AppTheme.bodyMedium,
+                style: isDark ? AppTheme.bodyMedium : AppTheme.bodyMediumLight,
               ),
             ),
-            const Icon(
+            Icon(
               Icons.arrow_forward_ios_rounded,
               size: 16,
-              color: AppTheme.textGray,
+              color: AppTheme.getSecondaryTextColor(isDark),
             ),
           ],
         ),
@@ -281,24 +501,28 @@ class ProfileScreen extends StatelessWidget {
   }
 
   void _showLogoutDialog(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+    final isDark = themeProvider.isDarkMode;
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: AppTheme.secondaryGray,
-        title: const Text(
-          'Logout',
-          style: AppTheme.headingSmall,
+        backgroundColor: AppTheme.getSurfaceColor(isDark),
+        title: Text(
+          'will.logout'.tr(),
+          style: isDark ? AppTheme.headingSmall : AppTheme.headingSmallLight,
         ),
-        content: const Text(
-          'Are you sure you want to logout?',
-          style: AppTheme.bodyMedium,
+        content: Text(
+          'profile.sure_logout'.tr(),
+          style: isDark ? AppTheme.bodyMedium : AppTheme.bodyMediumLight,
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text(
-              'Cancel',
-              style: TextStyle(color: AppTheme.textGray),
+            child: Text(
+              'will.cancel'.tr(),
+              style: TextStyle(
+                color: AppTheme.getSecondaryTextColor(isDark), // ✅ dynamic
+              ),
             ),
           ),
           TextButton(
@@ -310,9 +534,9 @@ class ProfileScreen extends StatelessWidget {
                 (route) => false,
               );
             },
-            child: const Text(
-              'Logout',
-              style: TextStyle(color: AppTheme.errorRed),
+            child: Text(
+              'will.logout'.tr(),
+              style: const TextStyle(color: AppTheme.errorRed),
             ),
           ),
         ],
@@ -379,113 +603,19 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  void _showPrivacySettings(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: AppTheme.secondaryGray,
-        title: const Text(
-          'Privacy & Security',
-          style: AppTheme.headingSmall,
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              title: const Text('Change Password', style: AppTheme.bodyMedium),
-              trailing: const Icon(Icons.arrow_forward_ios,
-                  size: 16, color: AppTheme.textGray),
-              onTap: () {},
-              contentPadding: EdgeInsets.zero,
-            ),
-            ListTile(
-              title: const Text('Two-Factor Authentication',
-                  style: AppTheme.bodyMedium),
-              trailing: const Icon(Icons.arrow_forward_ios,
-                  size: 16, color: AppTheme.textGray),
-              onTap: () {},
-              contentPadding: EdgeInsets.zero,
-            ),
-            ListTile(
-              title: const Text('Data & Privacy', style: AppTheme.bodyMedium),
-              trailing: const Icon(Icons.arrow_forward_ios,
-                  size: 16, color: AppTheme.textGray),
-              onTap: () {},
-              contentPadding: EdgeInsets.zero,
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text(
-              'Close',
-              style: TextStyle(color: AppTheme.accentGold),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showHelpSupport(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: AppTheme.secondaryGray,
-        title: const Text(
-          'Help & Support',
-          style: AppTheme.headingSmall,
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              title: const Text('FAQ', style: AppTheme.bodyMedium),
-              trailing: const Icon(Icons.arrow_forward_ios,
-                  size: 16, color: AppTheme.textGray),
-              onTap: () {},
-              contentPadding: EdgeInsets.zero,
-            ),
-            ListTile(
-              title: const Text('Contact Support', style: AppTheme.bodyMedium),
-              trailing: const Icon(Icons.arrow_forward_ios,
-                  size: 16, color: AppTheme.textGray),
-              onTap: () {},
-              contentPadding: EdgeInsets.zero,
-            ),
-            ListTile(
-              title: const Text('Report a Problem', style: AppTheme.bodyMedium),
-              trailing: const Icon(Icons.arrow_forward_ios,
-                  size: 16, color: AppTheme.textGray),
-              onTap: () {},
-              contentPadding: EdgeInsets.zero,
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text(
-              'Close',
-              style: TextStyle(color: AppTheme.accentGold),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   void _showTermsConditions(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+    final isDark = themeProvider.isDarkMode;
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: AppTheme.secondaryGray,
-        title: const Text(
-          'Terms & Conditions',
-          style: AppTheme.headingSmall,
+        backgroundColor:
+            isDark ? AppTheme.secondaryGray : AppTheme.lightSurface,
+        title: Text(
+          'profile.term_condition'.tr(),
+          style: isDark ? AppTheme.headingSmall : AppTheme.headingSmallLight,
         ),
-        content: const SizedBox(
+        content: SizedBox(
           width: double.maxFinite,
           height: 300,
           child: SingleChildScrollView(
@@ -501,16 +631,16 @@ class ProfileScreen extends StatelessWidget {
               'All payments are processed through Chapa...\n\n'
               '5. Privacy Policy\n'
               'We respect your privacy and protect your data...',
-              style: AppTheme.bodySmall,
+              style: isDark ? AppTheme.bodySmall : AppTheme.bodySmallLight,
             ),
           ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text(
-              'Close',
-              style: TextStyle(color: AppTheme.accentGold),
+            child: Text(
+              'will.close'.tr(),
+              style: const TextStyle(color: AppTheme.accentGold),
             ),
           ),
         ],
@@ -534,31 +664,79 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   File? _nationalId;
 
   @override
+  void initState() {
+    super.initState();
+
+    final user = Provider.of<AuthProvider>(context, listen: false).user;
+
+    if (user != null) {
+      _nameController.text = user.name;
+      _phoneController.text = user.phone;
+      _locationController.text = user.location;
+    }
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _phoneController.dispose();
+    _locationController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final isDark = themeProvider.isDarkMode;
     return Scaffold(
-      backgroundColor: AppTheme.primaryBlack,
+      backgroundColor:
+          isDark ? AppTheme.primaryBlack : AppTheme.lightBackground,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        title: const Text(
-          'Edit Profile',
+        title: Text(
+          'profile.edit_profile'.tr(),
           style: AppTheme.headingSmall,
         ),
         actions: [
           TextButton(
-            onPressed: () {
-              // Save changes
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Profile updated successfully!'),
-                  backgroundColor: AppTheme.successGreen,
-                ),
-              );
+            onPressed: () async {
+              final authProvider =
+                  Provider.of<AuthProvider>(context, listen: false);
+
+              try {
+                // ✅ Trim inputs and fallback to empty string if null
+                final userData = {
+                  "name": _nameController.text.trim(),
+                  "phone": _phoneController.text.trim(),
+                  "location": _locationController.text.trim(),
+                };
+
+                // Call provider to update profile
+                await authProvider.updateProfile(userData);
+
+                if (!mounted) return;
+
+                Navigator.pop(context);
+
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Profile updated successfully!'),
+                    backgroundColor: AppTheme.successGreen,
+                  ),
+                );
+              } catch (e) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Error updating profile: $e'),
+                    backgroundColor: AppTheme.errorRed,
+                  ),
+                );
+              }
             },
-            child: const Text(
-              'Save',
-              style: TextStyle(color: AppTheme.accentGold),
+            child: Text(
+              'will.save'.tr(),
+              style: const TextStyle(color: AppTheme.accentGold),
             ),
           ),
         ],
@@ -630,73 +808,85 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             TextField(
               controller: _nameController,
               decoration: InputDecoration(
-                labelText: 'Full Name',
-                labelStyle: AppTheme.bodyMedium,
+                labelText: 'auth.full_name'.tr(),
+                labelStyle:
+                    isDark ? AppTheme.bodyMedium : AppTheme.bodyMediumLight,
                 filled: true,
-                fillColor: AppTheme.secondaryGray,
+                fillColor:
+                    isDark ? AppTheme.secondaryGray : AppTheme.lightSurface,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                   borderSide: BorderSide.none,
                 ),
               ),
-              style: AppTheme.bodyMedium,
+              style: isDark ? AppTheme.bodyMedium : AppTheme.bodyMediumLight,
             ),
+
             const SizedBox(height: 20),
+
             TextField(
               controller: _phoneController,
               decoration: InputDecoration(
-                labelText: 'Phone Number',
-                labelStyle: AppTheme.bodyMedium,
+                labelText: 'auth.pnumber'.tr(),
+                labelStyle:
+                    isDark ? AppTheme.bodyMedium : AppTheme.bodyMediumLight,
                 filled: true,
-                fillColor: AppTheme.secondaryGray,
+                fillColor:
+                    isDark ? AppTheme.secondaryGray : AppTheme.lightSurface,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                   borderSide: BorderSide.none,
                 ),
               ),
-              style: AppTheme.bodyMedium,
+              style: isDark ? AppTheme.bodyMedium : AppTheme.bodyMediumLight,
             ),
             const SizedBox(height: 20),
             TextField(
               controller: _locationController,
               decoration: InputDecoration(
-                labelText: 'Location',
-                labelStyle: AppTheme.bodyMedium,
+                labelText: 'profile.location'.tr(),
+                labelStyle:
+                    isDark ? AppTheme.bodyMedium : AppTheme.bodyMediumLight,
                 filled: true,
-                fillColor: AppTheme.secondaryGray,
+                fillColor:
+                    isDark ? AppTheme.secondaryGray : AppTheme.lightSurface,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                   borderSide: BorderSide.none,
                 ),
               ),
-              style: AppTheme.bodyMedium,
+              style: isDark ? AppTheme.bodyMedium : AppTheme.bodyMediumLight,
             ),
+
             const SizedBox(height: 32),
-            // National ID Upload
+
+// National ID Upload
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: AppTheme.secondaryGray,
+                color: isDark ? AppTheme.secondaryGray : AppTheme.lightSurface,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'National ID (For Security)',
-                    style: AppTheme.bodyLarge,
+                  Text(
+                    'profile.national_id'.tr(),
+                    style:
+                        isDark ? AppTheme.bodyLarge : AppTheme.bodyLargeLight,
                   ),
                   const SizedBox(height: 8),
-                  const Text(
-                    'Upload your National ID for account verification. This is only accessible to admins.',
-                    style: AppTheme.bodySmall,
+                  Text(
+                    'profile.upload_national'.tr(),
+                    style:
+                        isDark ? AppTheme.bodySmall : AppTheme.bodySmallLight,
                   ),
                   const SizedBox(height: 12),
                   GestureDetector(
                     onTap: () async {
                       final file = await FileUploadService.pickImage(
                         context,
-                        title: 'National ID',
+                        title: 'provider.natid'.tr(),
                       );
                       if (file != null) {
                         setState(() => _nationalId = file);
@@ -727,11 +917,15 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                   ? FileUploadService.getFileName(
                                       _nationalId!.path)
                                   : 'Upload National ID',
-                              style: AppTheme.bodyMedium,
+                              style: isDark
+                                  ? AppTheme.bodyMedium
+                                  : AppTheme.bodyMediumLight,
                             ),
                           ),
                           Text(
-                            _nationalId != null ? 'Change' : 'Upload',
+                            _nationalId != null
+                                ? 'will.change'
+                                : 'will.upload'.tr(),
                             style: const TextStyle(color: AppTheme.accentGold),
                           ),
                         ],
@@ -745,5 +939,203 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         ),
       ),
     );
+  }
+}
+
+void _showReviewsDialog(BuildContext context, AuthProvider authProvider) async {
+  final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+  final isDark = themeProvider.isDarkMode;
+  final user = authProvider.user;
+
+  if (user == null) return;
+
+  showDialog(
+    context: context,
+    barrierDismissible: false,
+    builder: (context) => const Center(
+      child: CircularProgressIndicator(color: AppTheme.accentGold),
+    ),
+  );
+
+  try {
+    final reviewsData = await ApiService.getProviderReviews(user.id);
+    final reviews = reviewsData['reviews'] as List;
+
+    if (!context.mounted) return;
+    Navigator.pop(context);
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: isDark ? AppTheme.secondaryGray : Colors.white,
+        title: Text(
+          'profile.my_review (${reviews.length})'.tr(),
+          style: isDark ? AppTheme.headingSmall : AppTheme.headingSmallLight,
+        ),
+        content: SizedBox(
+          width: double.maxFinite,
+          height: 400,
+          child: reviews.isEmpty
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(
+                        Icons.rate_review_outlined,
+                        size: 48,
+                        color: AppTheme.textGray,
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'profile.no_review'.tr(),
+                        style: isDark
+                            ? AppTheme.bodyLarge
+                            : AppTheme.bodyLargeLight,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'profile.review_appear',
+                        style: AppTheme.bodySmall.copyWith(
+                          color: AppTheme.textGray,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ),
+                )
+              : ListView.builder(
+                  itemCount: reviews.length,
+                  itemBuilder: (context, index) {
+                    final review = reviews[index];
+                    final rating = review['rating'] ?? 0;
+                    final comment = review['review'] ?? '';
+                    final userId = review['userId'];
+                    final userName = userId?['name'] ?? 'Anonymous';
+                    final createdAt = review['createdAt'];
+
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 12),
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: isDark
+                            ? AppTheme.primaryBlack
+                            : AppTheme.lightBackground,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                            color: AppTheme.borderGray.withOpacity(0.3)),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              CircleAvatar(
+                                radius: 16,
+                                backgroundColor:
+                                    AppTheme.accentGold.withOpacity(0.2),
+                                child: const Icon(
+                                  Icons.person_rounded,
+                                  color: AppTheme.accentGold,
+                                  size: 16,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      userName,
+                                      style: (isDark
+                                              ? AppTheme.bodyMedium
+                                              : AppTheme.bodyMediumLight)
+                                          .copyWith(
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                    if (createdAt != null)
+                                      Text(
+                                        _formatDate(createdAt),
+                                        style: AppTheme.bodySmall.copyWith(
+                                          color: AppTheme.textGray,
+                                          fontSize: 11,
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                              ),
+                              Row(
+                                children: List.generate(5, (i) {
+                                  return Icon(
+                                    i < rating
+                                        ? Icons.star_rounded
+                                        : Icons.star_border_rounded,
+                                    size: 14,
+                                    color: AppTheme.accentGold,
+                                  );
+                                }),
+                              ),
+                            ],
+                          ),
+                          if (comment.isNotEmpty) ...[
+                            const SizedBox(height: 8),
+                            Text(
+                              comment,
+                              style: (isDark
+                                  ? AppTheme.bodySmall
+                                  : AppTheme.bodySmallLight),
+                            ),
+                          ],
+                        ],
+                      ),
+                    );
+                  },
+                ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(
+              'will.close'.tr(),
+              style: const TextStyle(color: AppTheme.accentGold),
+            ),
+          ),
+        ],
+      ),
+    );
+  } catch (e) {
+    if (!context.mounted) return;
+    Navigator.pop(context);
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Error loading reviews: $e'),
+        backgroundColor: AppTheme.errorRed,
+      ),
+    );
+  }
+}
+
+String _formatDate(String dateStr) {
+  try {
+    final date = DateTime.parse(dateStr);
+    final now = DateTime.now();
+    final difference = now.difference(date);
+
+    if (difference.inDays == 0) {
+      return 'Today';
+    } else if (difference.inDays == 1) {
+      return 'Yesterday';
+    } else if (difference.inDays < 7) {
+      return '${difference.inDays} days ago';
+    } else if (difference.inDays < 30) {
+      final weeks = (difference.inDays / 7).floor();
+      return '$weeks ${weeks == 1 ? "week" : "weeks"} ago';
+    } else {
+      final months = (difference.inDays / 30).floor();
+      return '$months ${months == 1 ? "month" : "months"} ago';
+    }
+  } catch (e) {
+    return dateStr;
   }
 }

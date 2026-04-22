@@ -50,7 +50,6 @@ class LogoWidget extends StatelessWidget {
           ),
         ),
         if (showText) ...[
-          const SizedBox(height: 16),
           Text(
             'ProMatch',
             style: TextStyle(

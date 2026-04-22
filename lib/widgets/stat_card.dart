@@ -17,9 +17,11 @@ class StatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: AppTheme.cardDecoration,
+      decoration: AppTheme.getCardDecoration(isDark),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -43,11 +45,17 @@ class StatCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 16),
-          Text(value, style: AppTheme.headingMedium.copyWith(color: color)),
+          Text(
+            value,
+            style:
+                (isDark ? AppTheme.headingMedium : AppTheme.headingMediumLight)
+                    .copyWith(color: color),
+          ),
           const SizedBox(height: 4),
           Text(
             title,
-            style: AppTheme.bodySmall.copyWith(color: AppTheme.textGray),
+            style: (isDark ? AppTheme.bodySmall : AppTheme.bodySmallLight)
+                .copyWith(color: AppTheme.textGray),
           ),
         ],
       ),

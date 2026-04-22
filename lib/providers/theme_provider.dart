@@ -3,7 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../utils/app_theme.dart';
 
 class ThemeProvider with ChangeNotifier {
-  bool _isDarkMode = true; // Default to dark mode
+  bool _isDarkMode = false;
   bool get isDarkMode => _isDarkMode;
 
   ThemeProvider() {
@@ -12,7 +12,7 @@ class ThemeProvider with ChangeNotifier {
 
   Future<void> _loadThemePreference() async {
     final prefs = await SharedPreferences.getInstance();
-    _isDarkMode = prefs.getBool('isDarkMode') ?? true; // Default to dark
+    _isDarkMode = prefs.getBool('isDarkMode') ?? false; // Default to dark
     notifyListeners();
   }
 
@@ -44,6 +44,35 @@ class ThemeProvider with ChangeNotifier {
           titleTextStyle: AppTheme.headingMedium,
           iconTheme: IconThemeData(color: AppTheme.primaryWhite),
         ),
+        bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+          backgroundColor: AppTheme.primaryBlack,
+          selectedItemColor: AppTheme.accentGold,
+          unselectedItemColor: AppTheme.textGray,
+          type: BottomNavigationBarType.fixed,
+        ),
+        elevatedButtonTheme:
+            ElevatedButtonThemeData(style: AppTheme.primaryButton),
+        outlinedButtonTheme:
+            OutlinedButtonThemeData(style: AppTheme.outlineButton),
+        inputDecorationTheme: InputDecorationTheme(
+          filled: true,
+          fillColor: AppTheme.secondaryGray,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide.none,
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide.none,
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: AppTheme.accentGold, width: 2),
+          ),
+          contentPadding:
+              const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+          hintStyle: const TextStyle(color: AppTheme.textGray),
+        ),
       );
 
   ThemeData get _lightTheme => ThemeData(
@@ -67,6 +96,46 @@ class ThemeProvider with ChangeNotifier {
             fontFamily: 'Inter',
           ),
           iconTheme: IconThemeData(color: Colors.black),
+        ),
+        bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+          backgroundColor: Colors.white,
+          selectedItemColor: AppTheme.accentGold,
+          unselectedItemColor: Colors.grey,
+          type: BottomNavigationBarType.fixed,
+        ),
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppTheme.successGreen,
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            textStyle: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              fontFamily: 'Inter',
+            ),
+          ),
+        ),
+        inputDecorationTheme: InputDecorationTheme(
+          filled: true,
+          fillColor: Colors.grey[100],
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide.none,
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide.none,
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: AppTheme.accentGold, width: 2),
+          ),
+          contentPadding:
+              const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+          hintStyle: TextStyle(color: Colors.grey[600]),
         ),
       );
 }

@@ -2,10 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/service_provider.dart';
+import '../../providers/theme_provider.dart';
 import '../../models/user_model.dart';
 import '../../models/booking_model.dart';
 import '../../utils/app_theme.dart';
 import '../../widgets/booking_card.dart';
+import '../../widgets/theme_toggle_button.dart';
+import '../../widgets/language_selector.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 class BookingsScreen extends StatefulWidget {
   const BookingsScreen({super.key});
@@ -26,12 +30,10 @@ class _BookingsScreenState extends State<BookingsScreen>
 
     _tabController = TabController(length: isProvider ? 4 : 3, vsync: this);
 
-    // Load bookings
+    // Load bookings after first frame
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final serviceProvider = Provider.of<ServiceProvider>(
-        context,
-        listen: false,
-      );
+      final serviceProvider =
+          Provider.of<ServiceProvider>(context, listen: false);
       final token = authProvider.token;
       if (token != null) {
         if (isProvider) {
@@ -53,20 +55,28 @@ class _BookingsScreenState extends State<BookingsScreen>
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
     final serviceProvider = Provider.of<ServiceProvider>(context);
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final isDark = themeProvider.isDarkMode;
     final isProvider = authProvider.user?.role == UserRole.provider;
     final bookings = isProvider
         ? serviceProvider.providerBookings
         : serviceProvider.bookings;
 
     return Scaffold(
-      backgroundColor: AppTheme.primaryBlack,
+      backgroundColor:
+          isDark ? AppTheme.primaryBlack : AppTheme.lightBackground,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         title: Text(
           isProvider ? 'Service Requests' : 'My Bookings',
-          style: AppTheme.headingSmall,
+          style: isDark ? AppTheme.headingSmall : AppTheme.headingSmallLight,
         ),
+        actions: [
+          LanguageSelector(isDarkMode: isDark),
+          const ThemeToggleButton(),
+          const SizedBox(width: 16),
+        ],
         bottom: TabBar(
           controller: _tabController,
           indicatorColor: AppTheme.accentGold,
@@ -74,16 +84,16 @@ class _BookingsScreenState extends State<BookingsScreen>
           unselectedLabelColor: AppTheme.textGray,
           labelStyle: AppTheme.bodySmall.copyWith(fontWeight: FontWeight.w600),
           tabs: isProvider
-              ? const [
-                  Tab(text: 'Pending'),
-                  Tab(text: 'Confirmed'),
-                  Tab(text: 'Completed'),
-                  Tab(text: 'All'),
+              ? [
+                  Tab(text: 'booking.pending'.tr()),
+                  Tab(text: 'booking.confirmed'.tr()),
+                  Tab(text: 'booking.completed'.tr()),
+                  Tab(text: 'booking.all'.tr()),
                 ]
-              : const [
-                  Tab(text: 'Upcoming'),
-                  Tab(text: 'Completed'),
-                  Tab(text: 'All'),
+              : [
+                  Tab(text: 'booking.upcoming'.tr()),
+                  Tab(text: 'booking.completed'.tr()),
+                  Tab(text: 'booking.all'.tr()),
                 ],
         ),
       ),
@@ -91,24 +101,31 @@ class _BookingsScreenState extends State<BookingsScreen>
         controller: _tabController,
         children: isProvider
             ? [
-                _buildBookingsList(bookings, BookingStatus.pending),
-                _buildBookingsList(bookings, BookingStatus.confirmed),
-                _buildBookingsList(bookings, BookingStatus.completed),
+                _buildBookingsList(bookings, [BookingStatus.pending]),
+                _buildBookingsList(bookings, [BookingStatus.confirmed]),
+                _buildBookingsList(bookings, [BookingStatus.completed]),
                 _buildBookingsList(bookings, null),
               ]
             : [
-                _buildBookingsList(bookings, BookingStatus.confirmed),
-                _buildBookingsList(bookings, BookingStatus.completed),
+                // Upcoming shows pending + confirmed
+                _buildBookingsList(
+                    bookings, [BookingStatus.pending, BookingStatus.confirmed]),
+                _buildBookingsList(bookings, [BookingStatus.completed]),
                 _buildBookingsList(bookings, null),
               ],
       ),
     );
   }
 
-  Widget _buildBookingsList(List<Booking> allBookings, BookingStatus? status) {
-    final filteredBookings = status == null
+  Widget _buildBookingsList(
+      List<Booking> allBookings, List<BookingStatus>? statuses) {
+    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+    final isDark = themeProvider.isDarkMode;
+
+    final filteredBookings = (statuses == null)
         ? allBookings
-        : allBookings.where((booking) => booking.status == status).toList();
+        : allBookings.where((b) => statuses.contains(b.status)).toList();
+
     if (filteredBookings.isEmpty) {
       return Center(
         child: Column(
@@ -121,13 +138,17 @@ class _BookingsScreenState extends State<BookingsScreen>
             ),
             const SizedBox(height: 16),
             Text(
-              status == null ? 'No bookings yet' : 'No ${status.name} bookings',
-              style: AppTheme.headingSmall,
+              statuses == null
+                  ? 'booking.no_booking'.tr()
+                  : 'No ${statuses.map((s) => s.name).join(", ")} bookings',
+              style:
+                  isDark ? AppTheme.headingSmall : AppTheme.headingSmallLight,
+              textAlign: TextAlign.center,
             ),
             const SizedBox(height: 8),
             Text(
-              'Your bookings will appear here',
-              style: AppTheme.bodyMedium.copyWith(color: AppTheme.textGray),
+              'booking.booking_appear'.tr(),
+              style: isDark ? AppTheme.bodyMedium : AppTheme.bodyMediumLight,
             ),
           ],
         ),
@@ -154,10 +175,8 @@ class _BookingsScreenState extends State<BookingsScreen>
 
   void _updateBookingStatus(String bookingId, BookingStatus newStatus) async {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    final serviceProvider = Provider.of<ServiceProvider>(
-      context,
-      listen: false,
-    );
+    final serviceProvider =
+        Provider.of<ServiceProvider>(context, listen: false);
     final token = authProvider.token;
 
     if (token != null) {
@@ -170,7 +189,7 @@ class _BookingsScreenState extends State<BookingsScreen>
       if (success && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Booking status updated successfully'),
+            content: Text('booking.booking_stat'),
             backgroundColor: AppTheme.successGreen,
           ),
         );

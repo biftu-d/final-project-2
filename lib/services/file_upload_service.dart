@@ -1,11 +1,17 @@
 import 'dart:io';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
+import 'package:path/path.dart';
+import 'package:mime/mime.dart';
 import '../utils/app_theme.dart';
 
 class FileUploadService {
   static final ImagePicker _imagePicker = ImagePicker();
+  static const String baseUrl = 'http://10.26.147.150:6061/api/upload';
 
   /// Pick image from camera or gallery
   static Future<File?> pickImage(BuildContext context,
@@ -83,6 +89,39 @@ class FileUploadService {
     } catch (e) {
       _showErrorDialog(context, 'Error picking PDF file: $e');
       return null;
+    }
+  }
+
+  Future<String> uploadFile(File file, String folder, String userId) async {
+    try {
+      // Construct full URL with folder
+      final uploadUrl = Uri.parse('$baseUrl/$folder/$userId');
+
+      final mimeType =
+          lookupMimeType(file.path)?.split('/') ?? ['image', 'jpeg'];
+
+      final request = http.MultipartRequest('POST', uploadUrl)
+        ..files.add(
+          http.MultipartFile(
+            'file',
+            file.readAsBytes().asStream(),
+            file.lengthSync(),
+            filename: basename(file.path),
+            contentType: MediaType(mimeType[0], mimeType[1]),
+          ),
+        );
+
+      final response = await request.send();
+
+      if (response.statusCode == 200) {
+        final respStr = await response.stream.bytesToString();
+        final respJson = jsonDecode(respStr);
+        return respJson['filePath'];
+      } else {
+        throw Exception('File upload failed: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('File upload error: $e');
     }
   }
 

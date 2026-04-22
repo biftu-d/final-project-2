@@ -1,12 +1,17 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:easy_localization/easy_localization.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/theme_provider.dart';
 import '../../models/user_model.dart';
 import '../../utils/app_theme.dart';
+import '../../utils/validators.dart';
 import '../../widgets/custom_button.dart';
 import '../../widgets/custom_text_field.dart';
 import '../../widgets/step_indicator.dart';
+import '../../widgets/theme_toggle_button.dart';
+import '../../widgets/language_selector.dart';
 import '../../services/file_upload_service.dart';
 import '../main_navigation.dart';
 
@@ -54,26 +59,17 @@ class _ProviderSignupScreenState extends State<ProviderSignupScreen> {
   final bool _hasBusinessLicense = false;
 
   final List<String> _serviceCategories = [
-    'Plumbing',
-    'Electrical',
-    'Cleaning',
-    'Beauty & Hair',
-    'Tutoring',
-    'Delivery',
-    'Photography',
-    'Repairs',
-    'Carpentry',
-    'Painting',
-    'Gardening',
-    'Other'
+    'provider.plum'.tr(),
+    'provider.elec'.tr(),
+    'provider.mech'.tr()
   ];
 
   final List<String> _availabilityOptions = [
-    'Weekdays (Mon-Fri)',
-    'Weekends (Sat-Sun)',
-    'Full Week (Mon-Sun)',
-    'Flexible Schedule',
-    'By Appointment Only'
+    'provider.wek'.tr(),
+    'provider.week'.tr(),
+    'provider.full'.tr(),
+    'provider.flex'.tr(),
+    'provider.byap'.tr()
   ];
 
   @override
@@ -126,8 +122,8 @@ class _ProviderSignupScreenState extends State<ProviderSignupScreen> {
     // Validate required files
     if (_profilePicture == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Profile picture is required'),
+        SnackBar(
+          content: Text('provider.ppreq'.tr()),
           backgroundColor: AppTheme.errorRed,
         ),
       );
@@ -136,8 +132,8 @@ class _ProviderSignupScreenState extends State<ProviderSignupScreen> {
 
     if (_nationalId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('National ID is required'),
+        SnackBar(
+          content: Text('provider.natreq'.tr()),
           backgroundColor: AppTheme.errorRed,
         ),
       );
@@ -146,8 +142,8 @@ class _ProviderSignupScreenState extends State<ProviderSignupScreen> {
 
     if (_businessLicense == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Business license is required'),
+        SnackBar(
+          content: Text('provider.busreq'.tr()),
           backgroundColor: AppTheme.errorRed,
         ),
       );
@@ -179,10 +175,10 @@ class _ProviderSignupScreenState extends State<ProviderSignupScreen> {
       if (success && mounted) {
         // Show pending verification message
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Registration submitted! Awaiting admin approval.'),
+          SnackBar(
+            content: Text('provider.regsubmitted'.tr()),
             backgroundColor: AppTheme.accentGold,
-            duration: Duration(seconds: 3),
+            duration: const Duration(seconds: 3),
           ),
         );
 
@@ -204,19 +200,30 @@ class _ProviderSignupScreenState extends State<ProviderSignupScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final isDark = themeProvider.isDarkMode;
     return Scaffold(
-      backgroundColor: AppTheme.primaryBlack,
+      backgroundColor:
+          isDark ? AppTheme.primaryBlack : AppTheme.lightBackground,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: AppTheme.primaryWhite),
+          icon: Icon(
+            Icons.arrow_back_ios,
+            color: isDark ? AppTheme.primaryWhite : AppTheme.lightText,
+          ),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: const Text(
-          'Service Provider Registration',
-          style: AppTheme.headingSmall,
+        title: Text(
+          'provider.service_provide'.tr(),
+          style: isDark ? AppTheme.headingSmall : AppTheme.headingSmallLight,
         ),
+        actions: [
+          LanguageSelector(isDarkMode: isDark),
+          const ThemeToggleButton(),
+          const SizedBox(width: 16),
+        ],
       ),
       body: Column(
         children: [
@@ -225,11 +232,11 @@ class _ProviderSignupScreenState extends State<ProviderSignupScreen> {
             child: StepIndicator(
               currentStep: _currentStep,
               totalSteps: _totalSteps,
-              stepTitles: const [
-                'Basic Info',
-                'Service Details',
-                'Account Security',
-                'Business Details'
+              stepTitles: [
+                'provider.basic'.tr(),
+                'provider.servdetail'.tr(),
+                'provider.accsecur'.tr(),
+                'provider.busdet'.tr()
               ],
             ),
           ),
@@ -252,6 +259,7 @@ class _ProviderSignupScreenState extends State<ProviderSignupScreen> {
   }
 
   Widget _buildBasicInfoStep() {
+    final isDark = Provider.of<ThemeProvider>(context).isDarkMode;
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24.0),
       child: Form(
@@ -259,24 +267,25 @@ class _ProviderSignupScreenState extends State<ProviderSignupScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Basic Information',
-              style: AppTheme.headingMedium,
+            Text(
+              'provider.basic'.tr(),
+              style:
+                  isDark ? AppTheme.headingMedium : AppTheme.headingMediumLight,
             ),
             const SizedBox(height: 8),
-            const Text(
-              'Tell us about yourself and your business',
-              style: AppTheme.bodyMedium,
+            Text(
+              'provider.tellus'.tr(),
+              style: isDark ? AppTheme.bodyMedium : AppTheme.bodyMediumLight,
             ),
             const SizedBox(height: 30),
             // Profile Picture (Required)
-            const Text(
-              'Profile Picture *',
-              style: AppTheme.bodyLarge,
+            Text(
+              'provider.pp'.tr(),
+              style: isDark ? AppTheme.bodyLarge : AppTheme.bodyLargeLight,
             ),
             const SizedBox(height: 10),
             _buildImageUploadSection(
-              'Profile Picture',
+              'provider.pp'.tr(),
               Icons.person,
               _profilePicture,
               (file) => setState(() => _profilePicture = file),
@@ -284,13 +293,13 @@ class _ProviderSignupScreenState extends State<ProviderSignupScreen> {
             ),
             const SizedBox(height: 20),
             // National ID (Required)
-            const Text(
-              'National ID *',
-              style: AppTheme.bodyLarge,
+            Text(
+              'provider.natid'.tr(),
+              style: isDark ? AppTheme.bodyLarge : AppTheme.bodyLargeLight,
             ),
             const SizedBox(height: 10),
             _buildImageUploadSection(
-              'National ID',
+              'provider.natid'.tr(),
               Icons.credit_card,
               _nationalId,
               (file) => setState(() => _nationalId = file),
@@ -299,52 +308,28 @@ class _ProviderSignupScreenState extends State<ProviderSignupScreen> {
             const SizedBox(height: 20),
             CustomTextField(
               controller: _providerNameController,
-              label: 'Provider Name',
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Please enter your name';
-                }
-                return null;
-              },
+              label: 'provider.pname'.tr(),
+              validator: Validators.validateName,
             ),
             const SizedBox(height: 20),
             CustomTextField(
               controller: _serviceNameController,
-              label: 'Service/Business Name',
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Please enter your service name';
-                }
-                return null;
-              },
+              label: 'provider.busname'.tr(),
+              validator: Validators.validateServiceName,
             ),
             const SizedBox(height: 20),
             CustomTextField(
               controller: _emailController,
-              label: 'Email',
+              label: 'auth.email'.tr(),
               keyboardType: TextInputType.emailAddress,
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Please enter your email';
-                }
-                if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
-                    .hasMatch(value)) {
-                  return 'Please enter a valid email';
-                }
-                return null;
-              },
+              validator: Validators.validateEmail,
             ),
             const SizedBox(height: 20),
             CustomTextField(
               controller: _phoneController,
-              label: 'Phone Number',
+              label: 'auth.pnumber'.tr(),
               keyboardType: TextInputType.phone,
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Please enter your phone number';
-                }
-                return null;
-              },
+              validator: Validators.validateEthiopianPhone,
             ),
           ],
         ),
@@ -353,6 +338,9 @@ class _ProviderSignupScreenState extends State<ProviderSignupScreen> {
   }
 
   Widget _buildServiceDetailsStep() {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final isDark = themeProvider.isDarkMode;
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24.0),
       child: Form(
@@ -360,19 +348,20 @@ class _ProviderSignupScreenState extends State<ProviderSignupScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Service Details',
-              style: AppTheme.headingMedium,
+            Text(
+              'provider.servdetail'.tr(),
+              style:
+                  isDark ? AppTheme.headingMedium : AppTheme.headingMediumLight,
             ),
             const SizedBox(height: 8),
-            const Text(
-              'Describe your services and expertise',
-              style: AppTheme.bodyMedium,
+            Text(
+              'provider.descurser'.tr(),
+              style: isDark ? AppTheme.bodyMedium : AppTheme.bodyMediumLight,
             ),
             const SizedBox(height: 30),
-            const Text(
-              'Service Category',
-              style: AppTheme.bodyLarge,
+            Text(
+              'provider.servcat'.tr(),
+              style: isDark ? AppTheme.bodyLarge : AppTheme.bodyLargeLight,
             ),
             const SizedBox(height: 10),
             Wrap(
@@ -380,6 +369,7 @@ class _ProviderSignupScreenState extends State<ProviderSignupScreen> {
               runSpacing: 10,
               children: _serviceCategories.map((category) {
                 final isSelected = _selectedCategory == category;
+
                 return GestureDetector(
                   onTap: () {
                     setState(() {
@@ -392,7 +382,9 @@ class _ProviderSignupScreenState extends State<ProviderSignupScreen> {
                     decoration: BoxDecoration(
                       color: isSelected
                           ? AppTheme.accentGold
-                          : AppTheme.secondaryGray,
+                          : (isDark
+                              ? AppTheme.secondaryGray
+                              : AppTheme.lightCard),
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
                         color: isSelected
@@ -405,7 +397,9 @@ class _ProviderSignupScreenState extends State<ProviderSignupScreen> {
                       style: AppTheme.bodySmall.copyWith(
                         color: isSelected
                             ? AppTheme.primaryBlack
-                            : AppTheme.primaryWhite,
+                            : (isDark
+                                ? AppTheme.primaryWhite
+                                : AppTheme.lightText),
                         fontWeight:
                             isSelected ? FontWeight.w600 : FontWeight.normal,
                       ),
@@ -417,11 +411,11 @@ class _ProviderSignupScreenState extends State<ProviderSignupScreen> {
             const SizedBox(height: 20),
             CustomTextField(
               controller: _descriptionController,
-              label: 'Service Description',
+              label: 'provider.servdesc'.tr(),
               maxLines: 4,
               validator: (value) {
                 if (value == null || value.isEmpty) {
-                  return 'Please describe your services';
+                  return 'provider.pleasedesc'.tr();
                 }
                 return null;
               },
@@ -429,7 +423,7 @@ class _ProviderSignupScreenState extends State<ProviderSignupScreen> {
             const SizedBox(height: 20),
             CustomTextField(
               controller: _locationController,
-              label: 'Service Location',
+              label: 'provider.servloc'.tr(),
               validator: (value) {
                 if (value == null || value.isEmpty) {
                   return 'Please enter your service location';
@@ -440,7 +434,7 @@ class _ProviderSignupScreenState extends State<ProviderSignupScreen> {
             const SizedBox(height: 20),
             CustomTextField(
               controller: _experienceController,
-              label: 'Years of Experience',
+              label: 'provider.yearex'.tr(),
               keyboardType: TextInputType.number,
               validator: (value) {
                 if (value == null || value.isEmpty) {
@@ -456,6 +450,8 @@ class _ProviderSignupScreenState extends State<ProviderSignupScreen> {
   }
 
   Widget _buildAccountSecurityStep() {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final isDark = themeProvider.isDarkMode;
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24.0),
       child: Form(
@@ -463,24 +459,26 @@ class _ProviderSignupScreenState extends State<ProviderSignupScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Account Security',
-              style: AppTheme.headingMedium,
+            Text(
+              'provider.accsecur'.tr(),
+              style:
+                  isDark ? AppTheme.headingMedium : AppTheme.headingMediumLight,
             ),
             const SizedBox(height: 8),
-            const Text(
-              'Create a secure password for your account',
-              style: AppTheme.bodyMedium,
+            Text(
+              'provider.creatsec'.tr(),
+              style: isDark ? AppTheme.bodyMedium : AppTheme.bodyMediumLight,
             ),
             const SizedBox(height: 30),
             CustomTextField(
               controller: _passwordController,
-              label: 'Password',
+              label: 'auth.password'.tr(),
               obscureText: !_isPasswordVisible,
               suffixIcon: IconButton(
                 icon: Icon(
                   _isPasswordVisible ? Icons.visibility_off : Icons.visibility,
-                  color: AppTheme.textGray,
+                  color:
+                      isDark ? AppTheme.textGray : AppTheme.lightTextSecondary,
                 ),
                 onPressed: () {
                   setState(() {
@@ -488,27 +486,20 @@ class _ProviderSignupScreenState extends State<ProviderSignupScreen> {
                   });
                 },
               ),
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Please enter a password';
-                }
-                if (value.length < 6) {
-                  return 'Password must be at least 6 characters';
-                }
-                return null;
-              },
+              validator: Validators.validatePassword,
             ),
             const SizedBox(height: 20),
             CustomTextField(
               controller: _confirmPasswordController,
-              label: 'Confirm Password',
+              label: 'auth.confirm_password'.tr(),
               obscureText: !_isConfirmPasswordVisible,
               suffixIcon: IconButton(
                 icon: Icon(
                   _isConfirmPasswordVisible
                       ? Icons.visibility_off
                       : Icons.visibility,
-                  color: AppTheme.textGray,
+                  color:
+                      isDark ? AppTheme.textGray : AppTheme.lightTextSecondary,
                 ),
                 onPressed: () {
                   setState(() {
@@ -521,7 +512,7 @@ class _ProviderSignupScreenState extends State<ProviderSignupScreen> {
                   return 'Please confirm your password';
                 }
                 if (value != _passwordController.text) {
-                  return 'Passwords do not match';
+                  return 'auth.passwords_dont_match'.tr();
                 }
                 return null;
               },
@@ -530,20 +521,21 @@ class _ProviderSignupScreenState extends State<ProviderSignupScreen> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: AppTheme.secondaryGray,
+                color: isDark ? AppTheme.secondaryGray : AppTheme.lightCard,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Password Requirements:',
-                    style: AppTheme.bodyMedium,
+                  Text(
+                    'auth.passreq'.tr(),
+                    style:
+                        isDark ? AppTheme.bodyMedium : AppTheme.bodyMediumLight,
                   ),
                   const SizedBox(height: 8),
-                  _buildPasswordRequirement('At least 6 characters'),
-                  _buildPasswordRequirement('Contains letters and numbers'),
-                  _buildPasswordRequirement('Unique and secure'),
+                  _buildPasswordRequirement('auth.passatleast'.tr()),
+                  _buildPasswordRequirement('auth.passcontain'.tr()),
+                  _buildPasswordRequirement('auth.passunique'.tr()),
                 ],
               ),
             ),
@@ -574,6 +566,8 @@ class _ProviderSignupScreenState extends State<ProviderSignupScreen> {
   }
 
   Widget _buildBusinessDetailsStep() {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final isDark = themeProvider.isDarkMode;
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24.0),
       child: Form(
@@ -581,19 +575,20 @@ class _ProviderSignupScreenState extends State<ProviderSignupScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Business Details',
-              style: AppTheme.headingMedium,
+            Text(
+              'provider.busdet'.tr(),
+              style:
+                  isDark ? AppTheme.headingMedium : AppTheme.headingMediumLight,
             ),
             const SizedBox(height: 8),
-            const Text(
-              'Complete your business profile',
-              style: AppTheme.bodyMedium,
+            Text(
+              'provider.completebp'.tr(),
+              style: isDark ? AppTheme.bodyMedium : AppTheme.bodyMediumLight,
             ),
             const SizedBox(height: 30),
-            const Text(
-              'Availability',
-              style: AppTheme.bodyLarge,
+            Text(
+              'provider.avail'.tr(),
+              style: isDark ? AppTheme.bodyLarge : AppTheme.bodyLargeLight,
             ),
             const SizedBox(height: 10),
             Column(
@@ -601,7 +596,8 @@ class _ProviderSignupScreenState extends State<ProviderSignupScreen> {
                 return RadioListTile<String>(
                   title: Text(
                     option,
-                    style: AppTheme.bodyMedium,
+                    style:
+                        isDark ? AppTheme.bodyMedium : AppTheme.bodyMediumLight,
                   ),
                   value: option,
                   groupValue: _selectedAvailability,
@@ -618,7 +614,7 @@ class _ProviderSignupScreenState extends State<ProviderSignupScreen> {
             const SizedBox(height: 20),
             CustomTextField(
               controller: _priceRangeController,
-              label: 'Price Range (e.g., 500-1000 ETB)',
+              label: 'provider.pricerange'.tr(),
               validator: (value) {
                 if (value == null || value.isEmpty) {
                   return 'Please enter your price range';
@@ -630,19 +626,20 @@ class _ProviderSignupScreenState extends State<ProviderSignupScreen> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: AppTheme.secondaryGray,
+                color: isDark ? AppTheme.secondaryGray : AppTheme.lightCard,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Business License *',
-                    style: AppTheme.bodyLarge,
+                  Text(
+                    'provider.buslic'.tr(),
+                    style:
+                        isDark ? AppTheme.bodyLarge : AppTheme.bodyLargeLight,
                   ),
                   const SizedBox(height: 10),
                   _buildPDFUploadSection(
-                    'Business License (PDF)',
+                    'provider.buspdf'.tr(),
                     Icons.description,
                     _businessLicense,
                     (file) => setState(() => _businessLicense = file),
@@ -658,29 +655,29 @@ class _ProviderSignupScreenState extends State<ProviderSignupScreen> {
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(color: AppTheme.accentGold.withOpacity(0.3)),
               ),
-              child: const Column(
+              child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
                     children: [
-                      Icon(
+                      const Icon(
                         Icons.info_outline,
                         color: AppTheme.accentGold,
                         size: 20,
                       ),
-                      SizedBox(width: 8),
+                      const SizedBox(width: 8),
                       Text(
-                        'Verification Process',
-                        style: TextStyle(
+                        'provider.verfproc'.tr(),
+                        style: const TextStyle(
                           color: AppTheme.accentGold,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
                     ],
                   ),
-                  SizedBox(height: 8),
+                  const SizedBox(height: 8),
                   Text(
-                    'Your information will be reviewed by our admin team. You will receive a verification notification once approved.',
+                    'provider.reviewed'.tr(),
                     style: AppTheme.bodySmall,
                   ),
                 ],
@@ -824,7 +821,7 @@ class _ProviderSignupScreenState extends State<ProviderSignupScreen> {
           if (_currentStep > 0)
             Expanded(
               child: CustomButton(
-                text: 'Back',
+                text: 'will.back'.tr(),
                 onPressed: _previousStep,
                 backgroundColor: AppTheme.secondaryGray,
                 textColor: AppTheme.primaryWhite,
@@ -836,8 +833,8 @@ class _ProviderSignupScreenState extends State<ProviderSignupScreen> {
               builder: (context, authProvider, child) {
                 return CustomButton(
                   text: _currentStep == _totalSteps - 1
-                      ? 'Submit for Approval'
-                      : 'Next',
+                      ? 'will.subapp'.tr()
+                      : 'will.next'.tr(),
                   onPressed: authProvider.isLoading ? null : _nextStep,
                   isLoading: authProvider.isLoading,
                 );

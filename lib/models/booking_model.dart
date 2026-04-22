@@ -10,6 +10,9 @@ class Booking {
   final String scheduledTime;
   final BookingStatus status;
   final String location;
+  final double? userLatitude;
+  final double? userLongitude;
+  final String? userAddress;
   final String price;
   final double? amount;
   final String? notes;
@@ -34,6 +37,9 @@ class Booking {
     required this.scheduledTime,
     required this.status,
     required this.location,
+    this.userLatitude,
+    this.userLongitude,
+    this.userAddress,
     required this.price,
     this.amount,
     this.notes,
@@ -50,20 +56,29 @@ class Booking {
   factory Booking.fromJson(Map<String, dynamic> json) {
     return Booking(
       id: json['_id'] ?? json['id'],
-      userId: json['userId'],
-      providerId: json['providerId'],
-      serviceId: json['serviceId'],
+      userId: json['userId'] is Map ? json['userId']['_id'] : json['userId'],
+      providerId: json['providerId'] is Map
+          ? json['providerId']['_id']
+          : json['providerId'],
+      serviceId: json['serviceId'] is Map
+          ? json['serviceId']['_id']
+          : json['serviceId'],
       serviceName: json['serviceName'],
       providerName: json['providerName'],
       customerName: json['customerName'],
       scheduledDate: DateTime.parse(json['scheduledDate']),
       scheduledTime: json['scheduledTime'],
       status: BookingStatus.values.firstWhere(
-        (e) => e.toString().split('.').last == json['status'],
+        (e) =>
+            e.toString().split('.').last.toLowerCase() ==
+            json['status'].toString().toLowerCase(),
         orElse: () => BookingStatus.pending,
       ),
       location: json['location'],
-      price: json['price'],
+      userLatitude: json['userLatitude']?.toDouble(),
+      userLongitude: json['userLongitude']?.toDouble(),
+      userAddress: json['userAddress'],
+      price: json['price'].toString(),
       amount: (json['amount'] as num?)?.toDouble(),
       notes: json['notes'],
       providerPhone: json['providerPhone'],
@@ -92,6 +107,9 @@ class Booking {
       'scheduledTime': scheduledTime,
       'status': status.toString().split('.').last,
       'location': location,
+      'userLatitude': userLatitude,
+      'userLongitude': userLongitude,
+      'userAddress': userAddress,
       'price': price,
       'notes': notes,
       'providerPhone': providerPhone,

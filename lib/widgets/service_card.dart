@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import '../models/service_model.dart';
 import '../utils/app_theme.dart';
+import 'package:easy_localization/easy_localization.dart';
+import '../providers/theme_provider.dart';
+import 'package:provider/provider.dart';
 
 class ServiceCard extends StatelessWidget {
   final ServiceModel service;
@@ -16,11 +19,17 @@ class ServiceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final isDark = themeProvider.isDarkMode;
     return GestureDetector(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.all(16),
-        decoration: AppTheme.cardDecoration,
+        decoration: isDark
+            ? AppTheme.cardDecoration
+            : AppTheme.cardDecoration.copyWith(
+                color: AppTheme.primaryWhite,
+              ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -61,15 +70,21 @@ class ServiceCard extends StatelessWidget {
                     children: [
                       Text(
                         service.serviceName,
-                        style: AppTheme.bodyLarge.copyWith(
-                          fontWeight: FontWeight.w600,
-                        ),
+                        style: (isDark
+                                ? AppTheme.bodyLarge
+                                : AppTheme.bodyLargeLight)
+                            .copyWith(fontWeight: FontWeight.w600),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         service.providerName,
-                        style: AppTheme.bodyMedium.copyWith(
-                          color: AppTheme.textGray,
+                        style: (isDark
+                                ? AppTheme.bodyMedium
+                                : AppTheme.bodyMediumLight)
+                            .copyWith(
+                          color: isDark
+                              ? AppTheme.textGray
+                              : AppTheme.lightTextSecondary,
                         ),
                       ),
                       const SizedBox(height: 4),
@@ -83,8 +98,13 @@ class ServiceCard extends StatelessWidget {
                           const SizedBox(width: 4),
                           Text(
                             '${service.rating.toStringAsFixed(1)} (${service.totalReviews})',
-                            style: AppTheme.bodySmall.copyWith(
-                              color: AppTheme.textGray,
+                            style: (isDark
+                                    ? AppTheme.bodySmall
+                                    : AppTheme.bodySmallLight)
+                                .copyWith(
+                              color: isDark
+                                  ? AppTheme.textGray
+                                  : AppTheme.lightTextSecondary,
                             ),
                           ),
                         ],
@@ -118,7 +138,7 @@ class ServiceCard extends StatelessWidget {
             const SizedBox(height: 12),
             Text(
               service.description,
-              style: AppTheme.bodyMedium,
+              style: isDark ? AppTheme.bodyMedium : AppTheme.bodyMediumLight,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
@@ -134,8 +154,12 @@ class ServiceCard extends StatelessWidget {
                 Expanded(
                   child: Text(
                     service.location,
-                    style: AppTheme.bodySmall.copyWith(
-                      color: AppTheme.textGray,
+                    style:
+                        (isDark ? AppTheme.bodySmall : AppTheme.bodySmallLight)
+                            .copyWith(
+                      color: isDark
+                          ? AppTheme.textGray
+                          : AppTheme.lightTextSecondary,
                     ),
                   ),
                 ),
@@ -197,7 +221,7 @@ class ServiceCard extends StatelessWidget {
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
-                      'Book Now',
+                      'welcome.book_now'.tr(),
                       style: AppTheme.bodySmall.copyWith(
                         color: AppTheme.primaryWhite,
                         fontWeight: FontWeight.w600,

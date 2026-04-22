@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:easy_localization/easy_localization.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/theme_provider.dart';
 import '../../models/user_model.dart';
 import '../../utils/app_theme.dart';
+import '../../utils/validators.dart';
 import '../../widgets/custom_button.dart';
 import '../../widgets/custom_text_field.dart';
 import '../main_navigation.dart';
 import 'signup_screen.dart';
+import 'forgot_password_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   final UserRole userRole;
@@ -60,13 +64,19 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final isDark = themeProvider.isDarkMode;
     return Scaffold(
-      backgroundColor: AppTheme.primaryBlack,
+      backgroundColor:
+          isDark ? AppTheme.primaryBlack : AppTheme.lightBackground,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: AppTheme.primaryWhite),
+          icon: Icon(
+            Icons.arrow_back_ios,
+            color: isDark ? AppTheme.primaryWhite : AppTheme.lightText,
+          ),
           onPressed: () => Navigator.of(context).pop(),
         ),
       ),
@@ -79,44 +89,42 @@ class _LoginScreenState extends State<LoginScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SizedBox(height: 20),
-                const Text(
-                  'Welcome Back',
-                  style: AppTheme.headingLarge,
+                Text(
+                  'welcome.welcome_back'.tr(),
+                  style: isDark
+                      ? AppTheme.headingLarge
+                      : AppTheme.headingLargeLight,
                 ),
                 const SizedBox(height: 8),
                 Text(
                   widget.userRole == UserRole.provider
-                      ? 'Sign in to manage your services'
-                      : 'Sign in to find local services',
-                  style: AppTheme.bodyLarge.copyWith(color: AppTheme.textGray),
+                      ? 'welcome.sign_in_provider'.tr()
+                      : 'welcome.sign_in_user'.tr(),
+                  style: isDark
+                      ? AppTheme.bodyLarge.copyWith(color: AppTheme.textGray)
+                      : AppTheme.bodyLargeLight
+                          .copyWith(color: AppTheme.lightTextSecondary),
                 ),
                 const SizedBox(height: 40),
                 CustomTextField(
                   controller: _emailController,
-                  label: 'Email',
+                  label: 'auth.email'.tr(),
                   keyboardType: TextInputType.emailAddress,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter your email';
-                    }
-                    if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
-                        .hasMatch(value)) {
-                      return 'Please enter a valid email';
-                    }
-                    return null;
-                  },
+                  validator: Validators.validateEmail,
                 ),
                 const SizedBox(height: 20),
                 CustomTextField(
                   controller: _passwordController,
-                  label: 'Password',
+                  label: 'auth.password'.tr(),
                   obscureText: !_isPasswordVisible,
                   suffixIcon: IconButton(
                     icon: Icon(
                       _isPasswordVisible
                           ? Icons.visibility_off
                           : Icons.visibility,
-                      color: AppTheme.textGray,
+                      color: isDark
+                          ? AppTheme.textGray
+                          : AppTheme.lightTextSecondary,
                     ),
                     onPressed: () {
                       setState(() {
@@ -126,16 +134,38 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Please enter your password';
+                      return 'auth.enter_pass'.tr();
                     }
                     return null;
                   },
                 ),
-                const SizedBox(height: 30),
+                const SizedBox(height: 12),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: GestureDetector(
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const ForgotPasswordScreen(),
+                        ),
+                      );
+                    },
+                    child: Text(
+                      'auth.forgot_password'.tr(),
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: Color.fromARGB(255, 212, 182, 6),
+                        fontWeight: FontWeight.w600,
+                        fontFamily: 'Inter',
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24),
                 Consumer<AuthProvider>(
                   builder: (context, authProvider, child) {
                     return CustomButton(
-                      text: 'Sign In',
+                      text: 'auth.sign_in'.tr(),
                       onPressed: authProvider.isLoading ? null : _login,
                       isLoading: authProvider.isLoading,
                     );
@@ -146,9 +176,14 @@ class _LoginScreenState extends State<LoginScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      'Don\'t have an account? ',
-                      style: AppTheme.bodyMedium
-                          .copyWith(color: AppTheme.textGray),
+                      'auth.dont_have_account'.tr(),
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: isDark
+                            ? AppTheme.textGray
+                            : AppTheme.lightTextSecondary,
+                        fontFamily: 'Inter',
+                      ),
                     ),
                     GestureDetector(
                       onTap: () {
@@ -160,10 +195,12 @@ class _LoginScreenState extends State<LoginScreen> {
                         );
                       },
                       child: Text(
-                        'Sign Up',
-                        style: AppTheme.bodyMedium.copyWith(
-                          color: AppTheme.accentGold,
+                        'auth.sign_up'.tr(),
+                        style: const TextStyle(
+                          fontSize: 14,
+                          color: Color.fromARGB(255, 211, 180, 6),
                           fontWeight: FontWeight.w600,
+                          fontFamily: 'Inter',
                         ),
                       ),
                     ),

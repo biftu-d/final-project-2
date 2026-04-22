@@ -1,18 +1,25 @@
 import 'package:flutter/material.dart';
 
 class AppTheme {
-  // Colors
+  // Dark theme colors
   static const Color primaryBlack = Color(0xFF1E1E1E);
   static const Color secondaryGray = Color(0xFF2A2A2A);
-  static const Color lightGray = Color(0xFF858383);
-  static const Color accentGold = Color(0xFFeba700);
+  static const Color accentGold = Color(0xFFFFD700);
   static const Color successGreen = Color(0xFF28A745);
   static const Color primaryWhite = Color(0xFFFFFFFF);
   static const Color textGray = Color(0xFF888888);
   static const Color borderGray = Color(0xFF333333);
   static const Color errorRed = Color(0xFFFF4444);
 
-  // Text Styles
+  // Light theme colors
+  static const Color lightBackground = Color(0xFFF8F9FA);
+  static const Color lightSurface = Color(0xFFFFFFFF);
+  static const Color lightText = Color(0xFF212529);
+  static const Color lightTextSecondary = Color(0xFF6C757D);
+  static const Color lightBorder = Color(0xFFE9ECEF);
+  static const Color lightCard = Color(0xFFFFFFFF);
+
+  // Text Styles for Dark Theme
   static const TextStyle headingLarge = TextStyle(
     fontSize: 28,
     fontWeight: FontWeight.bold,
@@ -58,12 +65,54 @@ class AppTheme {
     fontFamily: 'Inter',
   );
 
+  // Text Styles for Light Theme
+  static const TextStyle headingLargeLight = TextStyle(
+    fontSize: 28,
+    fontWeight: FontWeight.bold,
+    color: lightText,
+    fontFamily: 'Inter',
+  );
+
+  static const TextStyle headingMediumLight = TextStyle(
+    fontSize: 24,
+    fontWeight: FontWeight.bold,
+    color: lightText,
+    fontFamily: 'Inter',
+  );
+
+  static const TextStyle headingSmallLight = TextStyle(
+    fontSize: 20,
+    fontWeight: FontWeight.w600,
+    color: lightText,
+    fontFamily: 'Inter',
+  );
+
+  static const TextStyle bodyLargeLight = TextStyle(
+    fontSize: 16,
+    color: lightText,
+    fontFamily: 'Inter',
+  );
+
+  static const TextStyle bodyMediumLight = TextStyle(
+    fontSize: 14,
+    color: lightText,
+    fontFamily: 'Inter',
+  );
+
+  static const TextStyle bodySmallLight = TextStyle(
+    fontSize: 12,
+    color: lightTextSecondary,
+    fontFamily: 'Inter',
+  );
+
   // Button Styles
   static final ButtonStyle primaryButton = ElevatedButton.styleFrom(
     backgroundColor: successGreen,
     foregroundColor: primaryWhite,
     padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
-    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(12),
+    ),
     textStyle: const TextStyle(
       fontSize: 16,
       fontWeight: FontWeight.w600,
@@ -75,7 +124,9 @@ class AppTheme {
     backgroundColor: accentGold,
     foregroundColor: primaryBlack,
     padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
-    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(12),
+    ),
     textStyle: const TextStyle(
       fontSize: 16,
       fontWeight: FontWeight.w600,
@@ -87,36 +138,14 @@ class AppTheme {
     foregroundColor: primaryWhite,
     side: const BorderSide(color: borderGray),
     padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
-    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(12),
+    ),
     textStyle: const TextStyle(
       fontSize: 16,
       fontWeight: FontWeight.w600,
       fontFamily: 'Inter',
     ),
-  );
-
-  // Input Decoration
-  static final InputDecoration inputDecoration = InputDecoration(
-    filled: true,
-    fillColor: secondaryGray,
-    border: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(12),
-      borderSide: BorderSide.none,
-    ),
-    enabledBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(12),
-      borderSide: BorderSide.none,
-    ),
-    focusedBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(12),
-      borderSide: const BorderSide(color: accentGold, width: 2),
-    ),
-    errorBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(12),
-      borderSide: const BorderSide(color: errorRed, width: 2),
-    ),
-    contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
-    hintStyle: const TextStyle(color: textGray),
   );
 
   // Card Style
@@ -131,6 +160,19 @@ class AppTheme {
       ),
     ],
   );
+
+  static final BoxDecoration cardDecorationLight = BoxDecoration(
+    color: lightCard,
+    borderRadius: BorderRadius.circular(15),
+    boxShadow: [
+      BoxShadow(
+        color: Colors.black.withOpacity(0.1),
+        blurRadius: 8,
+        offset: const Offset(0, 2),
+      ),
+    ],
+  );
+
   // Theme Data
   static final ThemeData darkTheme = ThemeData(
     brightness: Brightness.dark,
@@ -142,18 +184,15 @@ class AppTheme {
       secondary: successGreen,
       surface: secondaryGray,
       error: errorRed,
+      onPrimary: primaryBlack,
+      onSecondary: primaryWhite,
+      onSurface: primaryWhite,
     ),
     appBarTheme: const AppBarTheme(
       backgroundColor: primaryBlack,
       elevation: 0,
       titleTextStyle: headingMedium,
       iconTheme: IconThemeData(color: primaryWhite),
-    ),
-    bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-      backgroundColor: primaryBlack,
-      selectedItemColor: accentGold,
-      unselectedItemColor: textGray,
-      type: BottomNavigationBarType.fixed,
     ),
     elevatedButtonTheme: ElevatedButtonThemeData(style: primaryButton),
     outlinedButtonTheme: OutlinedButtonThemeData(style: outlineButton),
@@ -174,45 +213,46 @@ class AppTheme {
       ),
       contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
       hintStyle: const TextStyle(color: textGray),
+      labelStyle: const TextStyle(color: primaryWhite),
     ),
+    cardTheme: CardThemeData(
+      color: secondaryGray,
+      elevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+    ),
+    dividerTheme: const DividerThemeData(color: borderGray),
+    iconTheme: const IconThemeData(color: primaryWhite),
   );
-  // Add this inside your AppTheme class (below darkTheme)
 
   static final ThemeData lightTheme = ThemeData(
     brightness: Brightness.light,
     primaryColor: accentGold,
-    scaffoldBackgroundColor: primaryWhite,
+    scaffoldBackgroundColor: lightBackground,
     fontFamily: 'Inter',
     colorScheme: const ColorScheme.light(
       primary: accentGold,
       secondary: successGreen,
-      surface: Colors.white,
+      surface: lightSurface,
       error: errorRed,
+      onPrimary: primaryBlack,
+      onSecondary: primaryWhite,
+      onSurface: lightText,
     ),
     appBarTheme: const AppBarTheme(
-      backgroundColor: primaryWhite,
-      elevation: 0,
-      titleTextStyle: TextStyle(
-        fontSize: 24,
-        fontWeight: FontWeight.bold,
-        color: primaryBlack,
-        fontFamily: 'Inter',
-      ),
-      iconTheme: IconThemeData(color: primaryBlack),
-    ),
-    bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-      backgroundColor: primaryWhite,
-      selectedItemColor: accentGold,
-      unselectedItemColor: textGray,
-      type: BottomNavigationBarType.fixed,
+      backgroundColor: lightSurface,
+      elevation: 1,
+      titleTextStyle: headingMediumLight,
+      iconTheme: IconThemeData(color: lightText),
+      shadowColor: Colors.black12,
     ),
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
         backgroundColor: successGreen,
         foregroundColor: primaryWhite,
         padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
-        shape: const RoundedRectangleBorder(
-            borderRadius: BorderRadius.all(Radius.circular(12))),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
         textStyle: const TextStyle(
           fontSize: 16,
           fontWeight: FontWeight.w600,
@@ -222,11 +262,12 @@ class AppTheme {
     ),
     outlinedButtonTheme: OutlinedButtonThemeData(
       style: OutlinedButton.styleFrom(
-        foregroundColor: primaryBlack,
-        side: const BorderSide(color: borderGray),
+        foregroundColor: lightText,
+        side: const BorderSide(color: lightBorder),
         padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
-        shape: const RoundedRectangleBorder(
-            borderRadius: BorderRadius.all(Radius.circular(12))),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
         textStyle: const TextStyle(
           fontSize: 16,
           fontWeight: FontWeight.w600,
@@ -236,17 +277,51 @@ class AppTheme {
     ),
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
-      fillColor: secondaryGray.withOpacity(0.05),
+      fillColor: lightSurface,
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide.none,
+        borderSide: const BorderSide(color: lightBorder),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: lightBorder),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
         borderSide: const BorderSide(color: accentGold, width: 2),
       ),
       contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
-      hintStyle: const TextStyle(color: textGray),
+      hintStyle: const TextStyle(color: lightTextSecondary),
+      labelStyle: const TextStyle(color: lightText),
     ),
+    cardTheme: CardThemeData(
+      color: lightCard,
+      elevation: 2,
+      shadowColor: Colors.black12,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+    ),
+    dividerTheme: const DividerThemeData(color: lightBorder),
+    iconTheme: const IconThemeData(color: lightText),
   );
+
+  // Helper methods to get theme-aware colors
+  static Color getBackgroundColor(bool isDark) {
+    return isDark ? primaryBlack : lightBackground;
+  }
+
+  static Color getSurfaceColor(bool isDark) {
+    return isDark ? secondaryGray : lightSurface;
+  }
+
+  static Color getTextColor(bool isDark) {
+    return isDark ? primaryWhite : lightText;
+  }
+
+  static Color getSecondaryTextColor(bool isDark) {
+    return isDark ? textGray : lightTextSecondary;
+  }
+
+  static BoxDecoration getCardDecoration(bool isDark) {
+    return isDark ? cardDecoration : cardDecorationLight;
+  }
 }

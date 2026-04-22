@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../utils/app_theme.dart';
+import '../providers/theme_provider.dart';
 
 class CustomTextField extends StatelessWidget {
   final TextEditingController controller;
@@ -31,12 +33,21 @@ class CustomTextField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           label,
-          style: AppTheme.bodyMedium.copyWith(fontWeight: FontWeight.w500),
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            color: themeProvider.isDarkMode
+                ? AppTheme.primaryWhite
+                : AppTheme.lightText,
+            fontFamily: 'Inter',
+          ),
         ),
         const SizedBox(height: 8),
         TextFormField(
@@ -47,30 +58,48 @@ class CustomTextField extends StatelessWidget {
           onChanged: onChanged,
           maxLines: maxLines,
           enabled: enabled,
-          style: AppTheme.bodyMedium,
+          style: TextStyle(
+            fontSize: 14,
+            color: themeProvider.isDarkMode
+                ? AppTheme.primaryWhite
+                : AppTheme.lightText,
+            fontFamily: 'Inter',
+          ),
           decoration: InputDecoration(
-            hintText: hint ?? label,
-            hintStyle: AppTheme.bodyMedium.copyWith(color: AppTheme.textGray),
+            hintText: hint ?? 'Enter ${label.toLowerCase()}',
+            hintStyle: TextStyle(
+              fontSize: 14,
+              color: themeProvider.isDarkMode
+                  ? AppTheme.textGray
+                  : AppTheme.lightTextSecondary,
+              fontFamily: 'Inter',
+            ),
             prefixIcon: prefixIcon,
             suffixIcon: suffixIcon,
             filled: true,
             fillColor: enabled
-                ? AppTheme.secondaryGray
-                : AppTheme.secondaryGray.withOpacity(0.5),
+                ? (themeProvider.isDarkMode
+                    ? AppTheme.secondaryGray
+                    : AppTheme.lightSurface)
+                : (themeProvider.isDarkMode
+                    ? AppTheme.secondaryGray.withOpacity(0.5)
+                    : AppTheme.lightSurface.withOpacity(0.5)),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide.none,
+              borderSide: themeProvider.isDarkMode
+                  ? BorderSide.none
+                  : const BorderSide(color: AppTheme.lightBorder),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide.none,
+              borderSide: themeProvider.isDarkMode
+                  ? BorderSide.none
+                  : const BorderSide(color: AppTheme.lightBorder),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(
-                color: AppTheme.accentGold,
-                width: 2,
-              ),
+              borderSide:
+                  const BorderSide(color: AppTheme.accentGold, width: 2),
             ),
             errorBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
@@ -80,10 +109,8 @@ class CustomTextField extends StatelessWidget {
               borderRadius: BorderRadius.circular(12),
               borderSide: const BorderSide(color: AppTheme.errorRed, width: 2),
             ),
-            contentPadding: const EdgeInsets.symmetric(
-              vertical: 16,
-              horizontal: 16,
-            ),
+            contentPadding:
+                const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
           ),
         ),
       ],

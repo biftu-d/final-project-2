@@ -22,6 +22,7 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   void initState() {
     super.initState();
+
     _animationController = AnimationController(
       duration: const Duration(seconds: 2),
       vsync: this,
@@ -41,35 +42,36 @@ class _SplashScreenState extends State<SplashScreen>
       ),
     );
 
-    _startSplashSequence();
-  }
-
-  void _startSplashSequence() async {
     _animationController.forward();
 
-    // Check authentication status
-    await context.read<AuthProvider>().checkAuthStatus();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _startSplashSequence();
+    });
+  }
 
-    // Wait for minimum splash duration (3 seconds)
-    await Future.delayed(const Duration(milliseconds: 3000));
+  Future<void> _startSplashSequence() async {
+    // ❌ NEVER use context directly inside initState async flow
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
 
-    if (mounted) {
-      final authProvider = context.read<AuthProvider>();
+    await authProvider.checkAuthStatus();
 
-      Navigator.of(context).pushReplacement(
-        PageRouteBuilder(
-          pageBuilder: (context, animation, secondaryAnimation) {
-            return authProvider.isAuthenticated
-                ? const HomeScreen()
-                : const RoleSelectionScreen();
-          },
-          transitionsBuilder: (context, animation, secondaryAnimation, child) {
-            return FadeTransition(opacity: animation, child: child);
-          },
-          transitionDuration: const Duration(milliseconds: 500),
-        ),
-      );
-    }
+    await Future.delayed(const Duration(seconds: 3));
+
+    if (!mounted) return;
+
+    final isLoggedIn = authProvider.isAuthenticated;
+
+    Navigator.of(context).pushReplacement(
+      PageRouteBuilder(
+        pageBuilder: (context, animation, secondaryAnimation) {
+          return isLoggedIn ? const HomeScreen() : const RoleSelectionScreen();
+        },
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          return FadeTransition(opacity: animation, child: child);
+        },
+        transitionDuration: const Duration(milliseconds: 500),
+      ),
+    );
   }
 
   @override

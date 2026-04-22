@@ -4,6 +4,7 @@ import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/user_model.dart';
 import '../services/api_service.dart';
+import '../services/notification_service.dart';
 
 class AuthProvider with ChangeNotifier {
   final _storage = const FlutterSecureStorage();
@@ -75,6 +76,8 @@ class AuthProvider with ChangeNotifier {
       await prefs.setString('auth_token', _token!);
       await prefs.setString('user_data', _user!.toJson().toString());
 
+      await _updateFCMToken();
+
       _isLoading = false;
       notifyListeners();
       return true;
@@ -99,6 +102,7 @@ class AuthProvider with ChangeNotifier {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('auth_token', _token!);
       await prefs.setString('user_data', _user!.toJson().toString());
+      await _updateFCMToken();
 
       _isLoading = false;
       notifyListeners();
@@ -107,6 +111,17 @@ class AuthProvider with ChangeNotifier {
       _isLoading = false;
       notifyListeners();
       rethrow;
+    }
+  }
+
+  Future<void> _updateFCMToken() async {
+    try {
+      final fcmToken = await NotificationService.getFCMToken();
+      if (fcmToken != null && _token != null) {
+        await ApiService.updateFCMToken(_token!, fcmToken);
+      }
+    } catch (e) {
+      print('Failed to update FCM token: $e');
     }
   }
 
@@ -127,6 +142,49 @@ class AuthProvider with ChangeNotifier {
     try {
       final updatedUser = await ApiService.updateProfile(_token!, userData);
       _user = User.fromJson(updatedUser);
+
+      // Update local storage
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('user_data', _user!.toJson().toString());
+
+      notifyListeners();
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<bool> requestPasswordReset(String email) async {
+    try {
+      await ApiService.requestPasswordReset(email);
+      return true;
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<bool> resetPassword(String token, String newPassword) async {
+    try {
+      await ApiService.resetPassword(token, newPassword);
+      return true;
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  // Update user data locally and persist
+  Future<void> updateUser(User updatedUser) async {
+    _user = updatedUser;
+    notifyListeners();
+
+    // Save updated user data to local storage
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('user_data', updatedUser.toJson().toString());
+  }
+
+  Future<void> refreshUser(String token) async {
+    try {
+      final userData = await ApiService.verifyToken(token);
+      _user = User.fromJson(userData);
 
       // Update local storage
       final prefs = await SharedPreferences.getInstance();

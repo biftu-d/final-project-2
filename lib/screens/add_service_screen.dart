@@ -5,6 +5,9 @@ import '../providers/service_provider.dart';
 import '../utils/app_theme.dart';
 import '../widgets/custom_button.dart';
 import '../widgets/custom_text_field.dart';
+import '../../providers/theme_provider.dart';
+import '../../widgets/theme_toggle_button.dart';
+import '../../widgets/language_selector.dart';
 
 class AddServiceScreen extends StatefulWidget {
   const AddServiceScreen({super.key});
@@ -27,15 +30,7 @@ class _AddServiceScreenState extends State<AddServiceScreen> {
   final List<String> _serviceCategories = [
     'Plumbing',
     'Electrical',
-    'Cleaning',
-    'Beauty & Hair',
-    'Tutoring',
-    'Delivery',
-    'Photography',
-    'Repairs',
-    'Carpentry',
-    'Painting',
-    'Gardening',
+    'Mechanical Technician',
     'Other'
   ];
 
@@ -125,19 +120,30 @@ class _AddServiceScreenState extends State<AddServiceScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final isDark = themeProvider.isDarkMode;
     return Scaffold(
-      backgroundColor: AppTheme.primaryBlack,
+      backgroundColor:
+          isDark ? AppTheme.primaryBlack : AppTheme.lightBackground,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: AppTheme.primaryWhite),
+          icon: Icon(
+            Icons.arrow_back_ios,
+            color: isDark ? AppTheme.primaryWhite : AppTheme.lightText,
+          ),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: const Text(
+        title: Text(
           'Add New Service',
-          style: AppTheme.headingSmall,
+          style: isDark ? AppTheme.headingSmall : AppTheme.headingSmallLight,
         ),
+        actions: [
+          LanguageSelector(isDarkMode: isDark),
+          const ThemeToggleButton(),
+          const SizedBox(width: 16),
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24.0),
@@ -159,9 +165,9 @@ class _AddServiceScreenState extends State<AddServiceScreen> {
               const SizedBox(height: 20),
 
               // Category Selection
-              const Text(
+              Text(
                 'Service Category',
-                style: AppTheme.bodyLarge,
+                style: isDark ? AppTheme.bodyLarge : AppTheme.bodyLargeLight,
               ),
               const SizedBox(height: 10),
               Wrap(
@@ -181,20 +187,29 @@ class _AddServiceScreenState extends State<AddServiceScreen> {
                       decoration: BoxDecoration(
                         color: isSelected
                             ? AppTheme.accentGold
-                            : AppTheme.secondaryGray,
+                            : (isDark
+                                ? AppTheme.secondaryGray
+                                : AppTheme.lightCard),
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(
                           color: isSelected
                               ? AppTheme.accentGold
-                              : AppTheme.borderGray,
+                              : (isDark
+                                  ? AppTheme.borderGray
+                                  : AppTheme.lightBorder),
                         ),
                       ),
                       child: Text(
                         category,
-                        style: AppTheme.bodySmall.copyWith(
+                        style: (isDark
+                                ? AppTheme.bodySmall
+                                : AppTheme.bodySmallLight)
+                            .copyWith(
                           color: isSelected
                               ? AppTheme.primaryBlack
-                              : AppTheme.primaryWhite,
+                              : (isDark
+                                  ? AppTheme.primaryWhite
+                                  : AppTheme.lightText),
                           fontWeight:
                               isSelected ? FontWeight.w600 : FontWeight.normal,
                         ),
@@ -256,16 +271,21 @@ class _AddServiceScreenState extends State<AddServiceScreen> {
               const SizedBox(height: 20),
 
               // Availability Selection
-              const Text(
+              Text(
                 'Availability',
-                style: AppTheme.bodyLarge,
+                style: isDark ? AppTheme.bodyLarge : AppTheme.bodyLargeLight,
               ),
               const SizedBox(height: 10),
               Column(
                 children: _availabilityOptions.map((day) {
                   final isSelected = _selectedAvailability.contains(day);
                   return CheckboxListTile(
-                    title: Text(day, style: AppTheme.bodyMedium),
+                    title: Text(
+                      day,
+                      style: isDark
+                          ? AppTheme.bodyMedium
+                          : AppTheme.bodyMediumLight,
+                    ),
                     value: isSelected,
                     onChanged: (value) {
                       setState(() {
@@ -277,6 +297,8 @@ class _AddServiceScreenState extends State<AddServiceScreen> {
                       });
                     },
                     activeColor: AppTheme.accentGold,
+                    checkColor: AppTheme.primaryBlack,
+                    tileColor: isDark ? Colors.transparent : AppTheme.lightCard,
                     contentPadding: EdgeInsets.zero,
                   );
                 }).toList(),

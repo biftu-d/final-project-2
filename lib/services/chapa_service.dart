@@ -4,7 +4,7 @@ import 'package:http/http.dart' as http;
 class ChapaService {
   static const String _baseUrl = 'https://api.chapa.co/v1';
   static const String _secretKey =
-      'CHASECK_TEST-your-secret-key-here'; // Replace with actual key
+      'CHASECK_TEST-veJ5dhUlGK57ViQlADcN3tR3LAqFuIQb';
 
   static Map<String, String> _getHeaders() {
     return {
@@ -40,8 +40,8 @@ class ChapaService {
           'return_url': returnUrl,
           'customization': customization ??
               {
-                'title': 'ProMatch Payment',
-                'description': 'Service booking payment',
+                'title': 'ProMatch',
+                'description': 'Service connection fee',
               },
         }),
       );

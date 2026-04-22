@@ -3,7 +3,8 @@ import 'package:http/http.dart' as http;
 import '../models/chat_model.dart';
 
 class ChatService {
-  static const String baseUrl = 'http://localhost:3000/api';
+  static const String baseUrl =
+      'https://obligable-voidable-radia.ngrok-free.dev/api';
 
   static Map<String, String> _getHeaders({String? token}) {
     final headers = {

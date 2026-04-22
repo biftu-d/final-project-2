@@ -1,10 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:easy_localization/easy_localization.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/theme_provider.dart';
 import '../../models/user_model.dart';
 import '../../utils/app_theme.dart';
+import '../../utils/validators.dart';
 import '../../widgets/custom_button.dart';
 import '../../widgets/custom_text_field.dart';
+import '../../widgets/theme_toggle_button.dart';
+import '../../widgets/language_selector.dart';
 import '../main_navigation.dart';
 import 'provider_signup_screen.dart';
 
@@ -27,6 +32,8 @@ class _SignupScreenState extends State<SignupScreen> {
   final _confirmPasswordController = TextEditingController();
   bool _isPasswordVisible = false;
   bool _isConfirmPasswordVisible = false;
+
+  bool _isLoading = false;
 
   @override
   void initState() {
@@ -54,8 +61,19 @@ class _SignupScreenState extends State<SignupScreen> {
     super.dispose();
   }
 
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: AppTheme.errorRed,
+      ),
+    );
+  }
+
   Future<void> _signup() async {
     if (!_formKey.currentState!.validate()) return;
+
+    setState(() => _isLoading = true);
 
     try {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
@@ -76,27 +94,37 @@ class _SignupScreenState extends State<SignupScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(e.toString()),
-            backgroundColor: AppTheme.errorRed,
-          ),
-        );
+        _showError(e.toString());
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
       }
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final isDark = themeProvider.isDarkMode;
     return Scaffold(
-      backgroundColor: AppTheme.primaryBlack,
+      backgroundColor:
+          isDark ? AppTheme.primaryBlack : AppTheme.lightBackground,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: AppTheme.primaryWhite),
+          icon: Icon(
+            Icons.arrow_back_ios,
+            color: isDark ? AppTheme.primaryWhite : AppTheme.lightText,
+          ),
           onPressed: () => Navigator.of(context).pop(),
         ),
+        actions: [
+          LanguageSelector(isDarkMode: isDark),
+          const ThemeToggleButton(),
+          const SizedBox(width: 16),
+        ],
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -107,76 +135,59 @@ class _SignupScreenState extends State<SignupScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SizedBox(height: 20),
-                const Text(
-                  'Create Account',
-                  style: AppTheme.headingLarge,
+                Text(
+                  'create_acc'.tr(),
+                  style: isDark
+                      ? AppTheme.headingLarge
+                      : AppTheme.headingLargeLight,
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Join ProMatch to find trusted local services',
-                  style: AppTheme.bodyLarge.copyWith(color: AppTheme.textGray),
+                  'auth.join_promatch'.tr(),
+                  style: isDark
+                      ? AppTheme.bodyLarge.copyWith(color: AppTheme.textGray)
+                      : AppTheme.bodyLargeLight
+                          .copyWith(color: AppTheme.lightTextSecondary),
                 ),
                 const SizedBox(height: 40),
                 CustomTextField(
                   controller: _nameController,
-                  label: 'Full Name',
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter your full name';
-                    }
-                    return null;
-                  },
+                  label: 'auth.full_name'.tr(),
+                  validator: Validators.validateName,
                 ),
                 const SizedBox(height: 20),
                 CustomTextField(
                   controller: _emailController,
-                  label: 'Email',
+                  label: 'auth.email'.tr(),
                   keyboardType: TextInputType.emailAddress,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter your email';
-                    }
-                    if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
-                        .hasMatch(value)) {
-                      return 'Please enter a valid email';
-                    }
-                    return null;
-                  },
+                  validator: Validators.validateEmail,
                 ),
                 const SizedBox(height: 20),
                 CustomTextField(
                   controller: _phoneController,
-                  label: 'Phone Number',
+                  label: 'auth.pnumber'.tr(),
                   keyboardType: TextInputType.phone,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter your phone number';
-                    }
-                    return null;
-                  },
+                  validator: Validators.validateEthiopianPhone,
                 ),
                 const SizedBox(height: 20),
                 CustomTextField(
                   controller: _locationController,
-                  label: 'Location',
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter your location';
-                    }
-                    return null;
-                  },
+                  label: 'auth.location'.tr(),
+                  validator: Validators.validateLocation,
                 ),
                 const SizedBox(height: 20),
                 CustomTextField(
                   controller: _passwordController,
-                  label: 'Password',
+                  label: 'auth.password'.tr(),
                   obscureText: !_isPasswordVisible,
                   suffixIcon: IconButton(
                     icon: Icon(
                       _isPasswordVisible
                           ? Icons.visibility_off
                           : Icons.visibility,
-                      color: AppTheme.textGray,
+                      color: isDark
+                          ? AppTheme.textGray
+                          : AppTheme.lightTextSecondary,
                     ),
                     onPressed: () {
                       setState(() {
@@ -184,27 +195,21 @@ class _SignupScreenState extends State<SignupScreen> {
                       });
                     },
                   ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter a password';
-                    }
-                    if (value.length < 6) {
-                      return 'Password must be at least 6 characters';
-                    }
-                    return null;
-                  },
+                  validator: Validators.validatePassword,
                 ),
                 const SizedBox(height: 20),
                 CustomTextField(
                   controller: _confirmPasswordController,
-                  label: 'Confirm Password',
+                  label: 'auth.confirm_password'.tr(),
                   obscureText: !_isConfirmPasswordVisible,
                   suffixIcon: IconButton(
                     icon: Icon(
                       _isConfirmPasswordVisible
                           ? Icons.visibility_off
                           : Icons.visibility,
-                      color: AppTheme.textGray,
+                      color: isDark
+                          ? AppTheme.textGray
+                          : AppTheme.lightTextSecondary,
                     ),
                     onPressed: () {
                       setState(() {
@@ -226,7 +231,7 @@ class _SignupScreenState extends State<SignupScreen> {
                 Consumer<AuthProvider>(
                   builder: (context, authProvider, child) {
                     return CustomButton(
-                      text: 'Create Account',
+                      text: 'auth.create_account'.tr(),
                       onPressed: authProvider.isLoading ? null : _signup,
                       isLoading: authProvider.isLoading,
                     );
@@ -237,17 +242,24 @@ class _SignupScreenState extends State<SignupScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      'Already have an account? ',
-                      style: AppTheme.bodyMedium
-                          .copyWith(color: AppTheme.textGray),
+                      'auth.already_account'.tr(),
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: isDark
+                            ? AppTheme.textGray
+                            : AppTheme.lightTextSecondary,
+                        fontFamily: 'Inter',
+                      ),
                     ),
                     GestureDetector(
                       onTap: () => Navigator.of(context).pop(),
                       child: Text(
-                        'Sign In',
-                        style: AppTheme.bodyMedium.copyWith(
+                        'auth.sign_in'.tr(),
+                        style: const TextStyle(
+                          fontSize: 14,
                           color: AppTheme.accentGold,
                           fontWeight: FontWeight.w600,
+                          fontFamily: 'Inter',
                         ),
                       ),
                     ),
